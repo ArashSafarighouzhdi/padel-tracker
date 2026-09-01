@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Padel Night Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --court-deep:#0e3d34;
+    --court-mid:#155248;
+    --court-line:#eef2e6;
+    --ball:#d7e654;
+    --ball-dim:#9fae3f;
+    --clay:#c9683f;
+    --clay-dim:#8a4a2f;
+    --ink:#08251f;
+    --paper:#f4f6ef;
+    --danger:#e2624f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--court-deep);
+    color:var(--court-line);
+    font-family:'Vazirmatn', sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  .lines{
+    position:fixed; inset:0; pointer-events:none; opacity:0.35; z-index:0;
+    background:
+      linear-gradient(var(--court-mid) 2px, transparent 2px) 0 0/100% 25%,
+      linear-gradient(90deg, var(--court-mid) 2px, transparent 2px) 0 0/33% 100%;
+    mix-blend-mode:overlay;
+  }
+  header{
+    position:relative; z-index:1;
+    padding:30px 20px 16px;
+    text-align:center;
+    border-bottom:2px solid rgba(238,242,230,0.15);
+  }
+  header .eyebrow{
+    font-family:'Space Mono', monospace;
+    font-size:12.5px;
+    color:var(--ball);
+    letter-spacing:0.5px;
+  }
+  header h1{
+    margin:6px 0 4px;
+    font-size:clamp(26px, 6vw, 38px);
+    font-weight:800;
+    letter-spacing:-0.5px;
+  }
+  header p{
+    margin:0; color:rgba(238,242,230,0.6); font-size:13.5px;
+  }
+
+  .tabs{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-top:16px;
+  }
+  .tabs button{
+    font-family:'Vazirmatn', sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    padding:8px 18px;
+    border-radius:999px;
+    border:1.5px solid rgba(238,242,230,0.2);
+    background:transparent;
+    color:rgba(238,242,230,0.7);
+    cursor:pointer;
+  }
+  .tabs button.active{
+    background:var(--ball);
+    border-color:var(--ball);
+    color:var(--ink);
+  }
+
+  main{
+    position:relative; z-index:1;
+    max-width:640px;
+    margin:0 auto;
+    padding:24px 16px;
+  }
+
+  section{margin-bottom:26px;}
+  h2{
+    font-size:14.5px;
+    font-weight:700;
+    color:var(--ball);
+    margin:0 0 12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  h2::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:rgba(238,242,230,0.18);
+  }
+  .hint{
+    font-size:12.5px;
+    color:rgba(238,242,230,0.5);
+    margin:-6px 0 12px;
+  }
+
+  /* ---- Setup: card shells ---- */
+  .panel{
+    background:var(--court-mid);
+    border:1px solid rgba(238,242,230,0.15);
+    border-radius:14px;
+    padding:18px;
+  }
+
+  /* players */
+  .player-add{
+    display:flex; gap:8px; margin-bottom:12px;
+  }
+  .player-add input{
+    flex:1;
+    min-width:0;
+    background:rgba(8,37,31,0.4);
+    border:1.5px solid rgba(238,242,230,0.2);
+    border-radius:8px;
+    color:var(--court-line);
+    font-family:'Vazirmatn', sans-serif;
+    font-size:16px;
+    padding:9px 12px;
+  }
+  .player-add button{
+    background:var(--ball);
+    color:var(--ink);
+    border:none;
+    border-radius:8px;
+    padding:0 16px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .chip-list{
+    display:flex; flex-wrap:wrap; gap:8px;
+  }
+  .chip{
+    display:flex; align-items:center; gap:6px;
+    background:rgba(238,242,230,0.1);
+    border:1px solid rgba(238,242,230,0.2);
+    border-radius:999px;
+    padding:6px 6px 6px 12px;
+    font-size:13.5px;
+  }
+  .chip button{
+    background:rgba(226,98,79,0.25);
+    border:none;
+    color:var(--court-line);
+    width:20px; height:20px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:12px;
+    line-height:1;
+  }
+
+  /* team names + duration */
+  .field-row{
+    display:flex; gap:12px; flex-wrap:wrap;
+  }
+  .field{
+    flex:1; min-width:130px;
+  }
+  .field label{
+    display:block;
+    font-size:12px;
+    color:rgba(238,242,230,0.55);
+    margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    background:rgba(8,37,31,0.4);
+    border:1.5px solid rgba(238,242,230,0.2);
+    border-radius:8px;
+    color:var(--court-line);
+    font-family:'Vazirmatn', sans-serif;
+    font-size:16px;
+    padding:9px 12px;
+  }
+  .duration-row{
+    display:flex; align-items:end; gap:10px; margin-top:14px;
+    flex-wrap:wrap;
+  }
+  .duration-row .field{flex:0 0 80px;}
+  .duration-sep{
+    padding-bottom:10px;
+    font-family:'Space Mono', monospace;
+    color:rgba(238,242,230,0.5);
+  }
+
+  /* rounds builder */
+  .round-block{
+    background:rgba(8,37,31,0.3);
+    border:1px solid rgba(238,242,230,0.15);
+    border-radius:12px;
+    padding:14px;
+    margin-bottom:12px;
+  }
+  .round-block-head{
+    display:flex; align-items:center; gap:8px; margin-bottom:10px;
+  }
+  .round-block-head input{
+    flex:1;
+    min-width:0;
+    background:transparent;
+    border:none;
+    border-bottom:1.5px dashed rgba(238,242,230,0.25);
+    color:var(--court-line);
+    font-weight:700;
+    font-size:16px;
+    padding:4px 2px;
+  }
+  .round-block-head input:focus{outline:none; border-color:var(--ball);}
+  .round-del{
+    background:none; border:none; color:var(--danger);
+    cursor:pointer; font-size:13px; font-weight:600;
+    padding:4px 8px;
+  }
+  .assign-chips{
+    display:flex; flex-wrap:wrap; gap:6px;
+  }
+  .assign-chip{
+    border-radius:999px;
+    border:1.5px solid rgba(238,242,230,0.25);
+    background:transparent;
+    color:rgba(238,242,230,0.7);
+    font-size:13px;
+    padding:6px 12px;
+    cursor:pointer;
+    font-family:'Vazirmatn', sans-serif;
+  }
+  .assign-chip.team-a{
+    background:var(--ball); border-color:var(--ball); color:var(--ink); font-weight:700;
+  }
+  .assign-chip.team-b{
+    background:var(--clay); border-color:var(--clay); color:var(--ink); font-weight:700;
+  }
+  .assign-legend{
+    font-size:11.5px; color:rgba(238,242,230,0.45); margin-top:8px;
+  }
+  .add-round-btn{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:1.5px dashed rgba(238,242,230,0.3);
+    background:transparent;
+    color:var(--court-line);
+    font-weight:600;
+    cursor:pointer;
+    font-family:'Vazirmatn', sans-serif;
+  }
+  .empty-note{
+    font-size:13px; color:rgba(238,242,230,0.5); text-align:center; padding:16px 0;
+  }
+
+  /* Leaderboard */
+  .board{
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  }
+  .board-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 16px;
+    border-bottom:1px solid rgba(8,37,31,0.08);
+  }
+  .board-row:last-child{border-bottom:none;}
+  .board-row .rank{
+    font-family:'Space Mono', monospace;
+    font-weight:700;
+    width:22px;
+    text-align:center;
+    color:var(--court-mid);
+  }
+  .board-row.leader .rank{color:var(--clay);}
+  .board-row .name{flex:1; font-weight:600; font-size:15px;}
+  .board-row .pts{
+    font-family:'Space Mono', monospace;
+    font-weight:700;
+    font-size:16.5px;
+    color:var(--court-deep);
+  }
+  .board-row .pts small{font-weight:400; font-size:11px; color:#7a8577; margin-left:3px;}
+
+  /* Round nav */
+  .round-nav{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding-bottom:6px;
+    scrollbar-width:none;
+  }
+  .round-nav::-webkit-scrollbar{display:none;}
+  .rn-btn{
+    flex:0 0 auto;
+    min-width:40px; height:40px;
+    padding:0 10px;
+    border-radius:10px;
+    border:1.5px solid rgba(238,242,230,0.25);
+    background:transparent;
+    color:var(--court-line);
+    font-family:'Space Mono', monospace;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .rn-btn.done{
+    background:rgba(215,230,84,0.15);
+    border-color:var(--ball-dim);
+    color:var(--ball);
+  }
+  .rn-btn.active{
+    background:var(--ball);
+    border-color:var(--ball);
+    color:var(--ink);
+  }
+
+  /* Round card */
+  .round-card{
+    background:var(--court-mid);
+    border:1px solid rgba(238,242,230,0.15);
+    border-radius:16px;
+    padding:22px;
+  }
+  .matchup{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:18px;
+  }
+  .team{
+    flex:1;
+    text-align:center;
+  }
+  .team .label{
+    font-size:12px;
+    color:rgba(238,242,230,0.55);
+    margin-bottom:4px;
+  }
+  .team .players{
+    font-size:16.5px;
+    font-weight:700;
+    line-height:1.5;
+  }
+  .vs{
+    font-family:'Space Mono', monospace;
+    color:var(--ball);
+    font-weight:700;
+    font-size:12.5px;
+    text-align:center;
+  }
+  .rest-line{
+    text-align:center;
+    font-size:12.5px;
+    color:rgba(238,242,230,0.5);
+    margin-bottom:20px;
+  }
+  .rest-line b{color:rgba(238,242,230,0.75); font-weight:600;}
+
+  /* Timer */
+  .timer-wrap{
+    text-align:center;
+    padding:14px 0 18px;
+    border-top:1px dashed rgba(238,242,230,0.2);
+    border-bottom:1px dashed rgba(238,242,230,0.2);
+    margin-bottom:20px;
+  }
+  .timer-display{
+    font-family:'Space Mono', monospace;
+    font-size:50px;
+    font-weight:700;
+    letter-spacing:2px;
+    color:var(--court-line);
+  }
+  .timer-display.warn{color:var(--ball);}
+  .timer-display.done{color:var(--danger);}
+  .timer-btns{
+    display:flex; gap:8px; justify-content:center; margin-top:10px;
+  }
+  .timer-btns button{
+    font-family:'Vazirmatn', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:8px 16px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    background:rgba(238,242,230,0.12);
+    color:var(--court-line);
+  }
+  .timer-btns button.primary{
+    background:var(--ball);
+    color:var(--ink);
+  }
+  .timer-btns button:active{transform:scale(0.96);}
+  .timer-note{
+    font-size:11.5px;
+    color:rgba(238,242,230,0.4);
+    margin-top:8px;
+  }
+
+  /* Score entry */
+  .score-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .score-box{
+    flex:1;
+    text-align:center;
+  }
+  .score-box label{
+    display:block;
+    font-size:12px;
+    color:rgba(238,242,230,0.6);
+    margin-bottom:6px;
+  }
+  .score-box input{
+    width:100%;
+    min-width:0;
+    background:rgba(8,37,31,0.4);
+    border:1.5px solid rgba(238,242,230,0.2);
+    border-radius:10px;
+    color:var(--court-line);
+    font-family:'Space Mono', monospace;
+    font-size:22px;
+    text-align:center;
+    padding:10px 0;
+  }
+  .score-box input:focus{
+    outline:none;
+    border-color:var(--ball);
+  }
+  .score-dash{
+    color:rgba(238,242,230,0.4);
+    font-family:'Space Mono', monospace;
+    font-size:20px;
+    margin-top:14px;
+  }
+
+  .save-btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:var(--ball);
+    color:var(--ink);
+    font-family:'Vazirmatn', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+  }
+  .save-btn:active{transform:scale(0.98);}
+  .saved-tag{
+    text-align:center;
+    font-size:12.5px;
+    color:var(--ball);
+    margin-top:10px;
+  }
+
+  footer{
+    text-align:center;
+    padding:20px;
+    font-size:12px;
+    color:rgba(238,242,230,0.35);
+  }
+  footer button{
+    background:none;
+    border:none;
+    color:rgba(238,242,230,0.45);
+    text-decoration:underline;
+    cursor:pointer;
+    font-family:'Vazirmatn', sans-serif;
+    font-size:12px;
+  }
+
+  @media (max-width:480px){
+    header{padding:22px 14px 14px;}
+    header h1{font-size:26px;}
+    header p{font-size:12.5px;}
+    .tabs{gap:8px;}
+    .tabs button{padding:7px 14px; font-size:13px;}
+    main{padding:18px 12px;}
+    section{margin-bottom:20px;}
+    .panel, .round-card{padding:14px;}
+    .field-row{flex-direction:column;}
+    .matchup{gap:8px;}
+    .team .label{font-size:11px;}
+    .team .players{font-size:15px;}
+    .vs{font-size:11px; flex:0 0 auto; white-space:nowrap;}
+    .timer-display{font-size:clamp(36px, 12vw, 46px); letter-spacing:1px;}
+    .timer-btns button{padding:8px 12px; font-size:12.5px;}
+    .score-box input{font-size:19px; padding:9px 0;}
+    .score-dash{margin-top:12px;}
+    .board-row{padding:10px 12px;}
+    .board-row .name{font-size:14px;}
+    .board-row .pts{font-size:15px;}
+    .assign-chip{padding:5px 10px; font-size:12.5px;}
+    .rn-btn{min-width:36px; height:36px; font-size:13px;}
+  }
+
+  @media (max-width:360px){
+    .timer-display{font-size:32px;}
+    header h1{font-size:23px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="lines"></div>
+
+<header>
+  <div class="eyebrow">CUSTOM ROUNDS · LIVE SCORING</div>
+  <h1>Padel Night Tracker</h1>
+  <p>Set your players and rounds, then play</p>
+  <div class="tabs">
+    <button id="tabSetup">Setup</button>
+    <button id="tabPlay">Play</button>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<footer>
+  <button id="resetBtn">Reset everything</button>
+</footer>
+
+<script>
+const STORAGE_KEY = "padel-tracker-v3";
+
+function defaultState(){
+  return {
+    view: "setup",
+    players: [],
+    teamNames: { a: "", b: "" },
+    roundDurationSec: 8*60,
+    rounds: [],
+    scores: [],
+    current: 0,
+  };
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && parsed.players && parsed.rounds) return parsed;
+    }
+  }catch(e){}
+  return defaultState();
+}
+
+let state = loadState();
+syncScores();
+
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function syncScores(){
+  const n = state.rounds.length;
+  const cur = state.scores || [];
+  const next = [];
+  for(let i=0;i<n;i++){
+    next.push(cur[i] || {a:"", b:"", done:false});
+  }
+  state.scores = next;
+  if(state.current >= n) state.current = Math.max(0, n-1);
+}
+
+function fmt(n){ return String(n).padStart(2,"0"); }
+
+/* ---------------- AUDIO (30s warning bell + finish) ---------------- */
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === "suspended") audioCtx.resume();
+}
+function beep(freq, start, dur, gainVal=0.28){
+  if(!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, audioCtx.currentTime + start);
+  gain.gain.linearRampToValueAtTime(gainVal, audioCtx.currentTime + start + 0.02);
+  gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + start + dur);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(audioCtx.currentTime + start);
+  osc.stop(audioCtx.currentTime + start + dur + 0.05);
+}
+function playWarningBell(){
+  ensureAudio();
+  beep(1046, 0, 0.18);
+  beep(1046, 0.28, 0.18);
+}
+function playFinishBell(){
+  ensureAudio();
+  beep(880, 0, 0.2);
+  beep(660, 0.24, 0.2);
+  beep(523, 0.48, 0.35);
+}
+
+/* ---------------- TIMER ---------------- */
+let timerInterval = null;
+let timeLeft = state.roundDurationSec;
+let timerRoundIndex = null;
+let warnedThisRound = false;
+
+function stopTimer(){
+  if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+}
+function resetTimerForRound(idx){
+  stopTimer();
+  timeLeft = state.roundDurationSec;
+  timerRoundIndex = idx;
+  warnedThisRound = false;
+  updateTimerDisplay();
+}
+function updateTimerDisplay(){
+  const el = document.getElementById("timerDisplay");
+  if(!el) return;
+  const m = Math.floor(timeLeft/60);
+  const s = timeLeft%60;
+  el.textContent = `${fmt(m)}:${fmt(s)}`;
+  el.classList.toggle("warn", timeLeft>0 && timeLeft<=30);
+  el.classList.toggle("done", timeLeft===0);
+}
+function startTimer(){
+  ensureAudio();
+  if(timerInterval || timeLeft<=0) return;
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    if(timeLeft===30 && !warnedThisRound){
+      warnedThisRound = true;
+      playWarningBell();
+    }
+    updateTimerDisplay();
+    if(timeLeft<=0){
+      stopTimer();
+      playFinishBell();
+      if(navigator.vibrate) navigator.vibrate([200,100,200]);
+    }
+  }, 1000);
+}
+
+/* ---------------- SCORING HELPERS ---------------- */
+function computeTotals(){
+  const totals = {};
+  const played = {};
+  state.players.forEach(p=>{ totals[p]=0; played[p]=0; });
+  state.rounds.forEach((r,i)=>{
+    const sc = state.scores[i];
+    if(!sc || !sc.done) return;
+    const av = parseInt(sc.a)||0, bv = parseInt(sc.b)||0;
+    r.a.forEach(p=>{ if(totals[p]===undefined){totals[p]=0;played[p]=0;} totals[p]+=av; played[p]++; });
+    r.b.forEach(p=>{ if(totals[p]===undefined){totals[p]=0;played[p]=0;} totals[p]+=bv; played[p]++; });
+  });
+  return {totals, played};
+}
+function restOf(round){
+  const used = new Set([...round.a, ...round.b]);
+  return state.players.filter(p=>!used.has(p));
+}
+
+/* ---------------- RENDER: SHELL ---------------- */
+function render(){
+  document.getElementById("tabSetup").classList.toggle("active", state.view==="setup");
+  document.getElementById("tabPlay").classList.toggle("active", state.view==="play");
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+  if(state.view === "setup"){
+    main.appendChild(renderSetup());
+  } else {
+    main.appendChild(renderPlay());
+  }
+  saveState();
+}
+
+document.getElementById("tabSetup").onclick = ()=>{ stopTimer(); state.view="setup"; render(); };
+document.getElementById("tabPlay").onclick = ()=>{ state.view="play"; render(); };
+let resetArmed = false;
+let resetArmTimeout = null;
+const resetBtn = document.getElementById("resetBtn");
+resetBtn.onclick = ()=>{
+  if(!resetArmed){
+    resetArmed = true;
+    resetBtn.textContent = "Tap again to confirm";
+    clearTimeout(resetArmTimeout);
+    resetArmTimeout = setTimeout(()=>{
+      resetArmed = false;
+      resetBtn.textContent = "Reset everything";
+    }, 4000);
+    return;
+  }
+  resetArmed = false;
+  clearTimeout(resetArmTimeout);
+  resetBtn.textContent = "Reset everything";
+  stopTimer();
+  timerRoundIndex = null;
+  state = defaultState();
+  render();
+};
+
+/* ---------------- RENDER: SETUP ---------------- */
+function renderSetup(){
+  const wrap = document.createElement("div");
+
+  // Players
+  const playersSection = document.createElement("section");
+  playersSection.innerHTML = `<h2>Players</h2>`;
+  const panel1 = document.createElement("div");
+  panel1.className = "panel";
+  panel1.innerHTML = `
+    <div class="player-add">
+      <input type="text" id="newPlayerInput" placeholder="Add a player name">
+      <button id="addPlayerBtn">Add</button>
+    </div>
+    <div class="chip-list" id="playerChips"></div>
+  `;
+  playersSection.appendChild(panel1);
+  wrap.appendChild(playersSection);
+
+  const chipList = panel1.querySelector("#playerChips");
+  state.players.forEach(p=>{
+    const chip = document.createElement("div");
+    chip.className = "chip";
+    chip.innerHTML = `<span>${escapeHtml(p)}</span>`;
+    const rm = document.createElement("button");
+    rm.textContent = "×";
+    rm.onclick = ()=>{
+      state.players = state.players.filter(x=>x!==p);
+      state.rounds.forEach(r=>{
+        r.a = r.a.filter(x=>x!==p);
+        r.b = r.b.filter(x=>x!==p);
+      });
+      render();
+    };
+    chip.appendChild(rm);
+    chipList.appendChild(chip);
+  });
+  panel1.querySelector("#addPlayerBtn").onclick = addPlayer;
+  panel1.querySelector("#newPlayerInput").addEventListener("keydown", e=>{
+    if(e.key === "Enter") addPlayer();
+  });
+  function addPlayer(){
+    const input = panel1.querySelector("#newPlayerInput");
+    const name = input.value.trim();
+    if(!name) return;
+    if(state.players.includes(name)){ input.value=""; return; }
+    state.players.push(name);
+    render();
+  }
+
+  // Team names + round length
+  const matchSection = document.createElement("section");
+  matchSection.innerHTML = `<h2>Match settings</h2>`;
+  const panel2 = document.createElement("div");
+  panel2.className = "panel";
+  const mins = Math.floor(state.roundDurationSec/60);
+  const secs = state.roundDurationSec%60;
+  panel2.innerHTML = `
+    <div class="field-row">
+      <div class="field">
+        <label>Team 1 name</label>
+        <input type="text" id="teamAName" placeholder="e.g. Team A" value="${escapeHtml(state.teamNames.a)}">
+      </div>
+      <div class="field">
+        <label>Team 2 name</label>
+        <input type="text" id="teamBName" placeholder="e.g. Team B" value="${escapeHtml(state.teamNames.b)}">
+      </div>
+    </div>
+    <div class="duration-row">
+      <div class="field">
+        <label>Round length — min</label>
+        <input type="number" min="0" id="durMin" value="${mins}">
+      </div>
+      <div class="duration-sep">:</div>
+      <div class="field">
+        <label>sec</label>
+        <input type="number" min="0" max="59" id="durSec" value="${secs}">
+      </div>
+    </div>
+  `;
+  matchSection.appendChild(panel2);
+  wrap.appendChild(matchSection);
+
+  panel2.querySelector("#teamAName").addEventListener("input", e=>{
+    state.teamNames.a = e.target.value; saveState();
+  });
+  panel2.querySelector("#teamBName").addEventListener("input", e=>{
+    state.teamNames.b = e.target.value; saveState();
+  });
+  function applyDuration(){
+    const m = parseInt(panel2.querySelector("#durMin").value)||0;
+    const s = parseInt(panel2.querySelector("#durSec").value)||0;
+    state.roundDurationSec = Math.max(0, m*60+s);
+    saveState();
+  }
+  panel2.querySelector("#durMin").addEventListener("change", applyDuration);
+  panel2.querySelector("#durSec").addEventListener("change", applyDuration);
+
+  // Rounds
+  const roundsSection = document.createElement("section");
+  roundsSection.innerHTML = `<h2>Rounds</h2>`;
+  const hint = document.createElement("div");
+  hint.className = "hint";
+  hint.textContent = "Tap a player to cycle: resting → " + (state.teamNames.a||"Team 1") + " → " + (state.teamNames.b||"Team 2") + " → resting.";
+  roundsSection.appendChild(hint);
+
+  if(state.players.length < 2){
+    const note = document.createElement("div");
+    note.className = "empty-note";
+    note.textContent = "Add at least 2 players to build rounds.";
+    roundsSection.appendChild(note);
+  }
+
+  state.rounds.forEach((r, idx)=>{
+    const block = document.createElement("div");
+    block.className = "round-block";
+    const head = document.createElement("div");
+    head.className = "round-block-head";
+    head.innerHTML = `
+      <input type="text" placeholder="Round ${idx+1}" value="${escapeHtml(r.label||"")}">
+      <button class="round-del">Remove</button>
+    `;
+    head.querySelector("input").addEventListener("input", e=>{
+      r.label = e.target.value; saveState();
+    });
+    head.querySelector(".round-del").onclick = ()=>{
+      state.rounds.splice(idx,1);
+      syncScores();
+      render();
+    };
+    block.appendChild(head);
+
+    const chips = document.createElement("div");
+    chips.className = "assign-chips";
+    state.players.forEach(p=>{
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "assign-chip";
+      let cls = "";
+      if(r.a.includes(p)) cls = "team-a";
+      else if(r.b.includes(p)) cls = "team-b";
+      if(cls) btn.classList.add(cls);
+      btn.textContent = p;
+      btn.onclick = ()=>{
+        if(r.a.includes(p)){
+          r.a = r.a.filter(x=>x!==p);
+          r.b.push(p);
+        } else if(r.b.includes(p)){
+          r.b = r.b.filter(x=>x!==p);
+        } else {
+          r.a.push(p);
+        }
+        render();
+      };
+      chips.appendChild(btn);
+    });
+    block.appendChild(chips);
+
+    const legend = document.createElement("div");
+    legend.className = "assign-legend";
+    const restNames = restOf(r);
+    legend.textContent = `Resting: ${restNames.length ? restNames.join(", ") : "—"}`;
+    block.appendChild(legend);
+
+    roundsSection.appendChild(block);
+  });
+
+  const addBtn = document.createElement("button");
+  addBtn.className = "add-round-btn";
+  addBtn.textContent = "+ Add round";
+  addBtn.onclick = ()=>{
+    state.rounds.push({label:"", a:[], b:[]});
+    syncScores();
+    render();
+  };
+  roundsSection.appendChild(addBtn);
+
+  wrap.appendChild(roundsSection);
+
+  const goPlay = document.createElement("button");
+  goPlay.className = "save-btn";
+  goPlay.textContent = "Go to Play →";
+  goPlay.onclick = ()=>{ state.view="play"; render(); };
+  wrap.appendChild(goPlay);
+
+  return wrap;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+/* ---------------- RENDER: PLAY ---------------- */
+function renderPlay(){
+  const wrap = document.createElement("div");
+
+  if(state.rounds.length === 0){
+    const note = document.createElement("div");
+    note.className = "empty-note";
+    note.textContent = "No rounds defined yet — go to Setup to add players and rounds.";
+    wrap.appendChild(note);
+    return wrap;
+  }
+
+  // Leaderboard
+  const boardSection = document.createElement("section");
+  boardSection.innerHTML = `<h2>Leaderboard</h2>`;
+  const board = document.createElement("div");
+  board.className = "board";
+  const {totals, played} = computeTotals();
+  const sorted = [...state.players].sort((x,y)=> totals[y]-totals[x]);
+  sorted.forEach((p, idx)=>{
+    const row = document.createElement("div");
+    row.className = "board-row" + (idx===0 && totals[p]>0 ? " leader" : "");
+    row.innerHTML = `
+      <div class="rank">${idx+1}</div>
+      <div class="name">${escapeHtml(p)}</div>
+      <div class="pts">${totals[p]}<small>/ ${played[p]} rd</small></div>
+    `;
+    board.appendChild(row);
+  });
+  boardSection.appendChild(board);
+  wrap.appendChild(boardSection);
+
+  // Round nav
+  const navSection = document.createElement("section");
+  navSection.innerHTML = `<h2>Rounds</h2>`;
+  const nav = document.createElement("div");
+  nav.className = "round-nav";
+  state.rounds.forEach((r,i)=>{
+    const btn = document.createElement("button");
+    btn.className = "rn-btn" + (state.scores[i].done ? " done" : "") + (i===state.current ? " active" : "");
+    btn.textContent = r.label ? r.label : String(i+1);
+    btn.onclick = ()=>{ stopTimer(); state.current = i; render(); };
+    nav.appendChild(btn);
+  });
+  navSection.appendChild(nav);
+  wrap.appendChild(navSection);
+
+  // Round card
+  const cardSection = document.createElement("section");
+  const card = document.createElement("div");
+  card.className = "round-card";
+
+  const i = state.current;
+  const r = state.rounds[i];
+  const sc = state.scores[i];
+  const rest = restOf(r);
+
+  if(timerRoundIndex !== i){
+    resetTimerForRound(i);
+  }
+
+  card.innerHTML = `
+    <div class="matchup">
+      <div class="team">
+        <div class="label">${escapeHtml(state.teamNames.a || "Team 1")}</div>
+        <div class="players">${r.a.length ? r.a.map(escapeHtml).join(" + ") : "—"}</div>
+      </div>
+      <div class="vs">${r.label ? escapeHtml(r.label) : "Round " + (i+1)}</div>
+      <div class="team">
+        <div class="label">${escapeHtml(state.teamNames.b || "Team 2")}</div>
+        <div class="players">${r.b.length ? r.b.map(escapeHtml).join(" + ") : "—"}</div>
+      </div>
+    </div>
+    <div class="rest-line">Resting: <b>${rest.length ? rest.map(escapeHtml).join(", ") : "—"}</b></div>
+
+    <div class="timer-wrap">
+      <div class="timer-display" id="timerDisplay"></div>
+      <div class="timer-btns">
+        <button class="primary" id="startBtn">Start</button>
+        <button id="pauseBtn">Pause</button>
+        <button id="resetTimerBtn">Reset</button>
+      </div>
+      <div class="timer-note">Bell rings at 30s left, and when time's up</div>
+    </div>
+
+    <div class="score-row">
+      <div class="score-box">
+        <label>${escapeHtml(state.teamNames.a || "Team 1")} score</label>
+        <input type="number" min="0" inputmode="numeric" id="scoreA" value="${sc.a}">
+      </div>
+      <div class="score-dash">–</div>
+      <div class="score-box">
+        <label>${escapeHtml(state.teamNames.b || "Team 2")} score</label>
+        <input type="number" min="0" inputmode="numeric" id="scoreB" value="${sc.b}">
+      </div>
+    </div>
+
+    <button class="save-btn" id="saveBtn">Save score${i<state.rounds.length-1 ? " & go to next round" : ""}</button>
+    ${sc.done ? `<div class="saved-tag">✓ Saved — you can still edit and re-save</div>` : ""}
+  `;
+
+  cardSection.appendChild(card);
+  wrap.appendChild(cardSection);
+
+  // wire up after insertion
+  setTimeout(()=>{
+    updateTimerDisplay();
+    document.getElementById("startBtn").onclick = startTimer;
+    document.getElementById("pauseBtn").onclick = stopTimer;
+    document.getElementById("resetTimerBtn").onclick = ()=> resetTimerForRound(i);
+    document.getElementById("saveBtn").onclick = ()=>{
+      const a = document.getElementById("scoreA").value;
+      const b = document.getElementById("scoreB").value;
+      state.scores[i] = { a, b, done:true };
+      if(i < state.rounds.length-1){
+        stopTimer();
+        state.current = i+1;
+      }
+      render();
+    };
+  }, 0);
+
+  return wrap;
+}
+
+render();
+</script>
+
+</body>
+</html>
