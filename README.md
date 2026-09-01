@@ -40,20 +40,6 @@ Just open `index.html` in a browser, or serve it:
 npx serve .
 ```
 
-## Deploy to Vercel
-
-### Option A — Vercel CLI
-```bash
-npm i -g vercel
-vercel --prod
-```
-
-### Option B — GitHub + Vercel dashboard
-1. Push this folder to a GitHub repo.
-2. Go to https://vercel.com/new and import the repo.
-3. Framework preset: **Other** (it's a static site — no build command needed).
-4. Deploy.
-
 ## Project structure
 
 ```
