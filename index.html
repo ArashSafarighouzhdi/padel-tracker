@@ -786,11 +786,11 @@
         try {
           await fetch(`${KVDB_BASE}/${state.shareBucket}/state`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "text/plain" },
             body: JSON.stringify(snapshot),
           });
         } catch (e) {
-          /* best-effort; ignore network errors */
+          console.error("Live share update failed:", e);
         }
       }
 
