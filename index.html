@@ -1,862 +1,1083 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" dir="ltr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Padel Night Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --court-deep:#0e3d34;
-    --court-mid:#155248;
-    --court-line:#eef2e6;
-    --ball:#d7e654;
-    --ball-dim:#9fae3f;
-    --clay:#c9683f;
-    --clay-dim:#8a4a2f;
-    --ink:#08251f;
-    --paper:#f4f6ef;
-    --danger:#e2624f;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:var(--court-deep);
-    color:var(--court-line);
-    font-family:'Vazirmatn', sans-serif;
-    min-height:100vh;
-    padding-bottom:60px;
-  }
-  .lines{
-    position:fixed; inset:0; pointer-events:none; opacity:0.35; z-index:0;
-    background:
-      linear-gradient(var(--court-mid) 2px, transparent 2px) 0 0/100% 25%,
-      linear-gradient(90deg, var(--court-mid) 2px, transparent 2px) 0 0/33% 100%;
-    mix-blend-mode:overlay;
-  }
-  header{
-    position:relative; z-index:1;
-    padding:30px 20px 16px;
-    text-align:center;
-    border-bottom:2px solid rgba(238,242,230,0.15);
-  }
-  header .eyebrow{
-    font-family:'Space Mono', monospace;
-    font-size:12.5px;
-    color:var(--ball);
-    letter-spacing:0.5px;
-  }
-  header h1{
-    margin:6px 0 4px;
-    font-size:clamp(26px, 6vw, 38px);
-    font-weight:800;
-    letter-spacing:-0.5px;
-  }
-  header p{
-    margin:0; color:rgba(238,242,230,0.6); font-size:13.5px;
-  }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Padel Night Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --court-deep: #0e3d34;
+        --court-mid: #155248;
+        --court-line: #eef2e6;
+        --ball: #d7e654;
+        --ball-dim: #9fae3f;
+        --clay: #c9683f;
+        --clay-dim: #8a4a2f;
+        --ink: #08251f;
+        --paper: #f4f6ef;
+        --danger: #e2624f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--court-deep);
+        color: var(--court-line);
+        font-family: "Vazirmatn", sans-serif;
+        min-height: 100vh;
+        padding-bottom: 60px;
+      }
+      .lines {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.35;
+        z-index: 0;
+        background:
+          linear-gradient(var(--court-mid) 2px, transparent 2px) 0 0/100% 25%,
+          linear-gradient(90deg, var(--court-mid) 2px, transparent 2px) 0 0/33%
+            100%;
+        mix-blend-mode: overlay;
+      }
+      header {
+        position: relative;
+        z-index: 1;
+        padding: 30px 20px 16px;
+        text-align: center;
+        border-bottom: 2px solid rgba(238, 242, 230, 0.15);
+      }
+      header .eyebrow {
+        font-family: "Space Mono", monospace;
+        font-size: 12.5px;
+        color: var(--ball);
+        letter-spacing: 0.5px;
+      }
+      header h1 {
+        margin: 6px 0 4px;
+        font-size: clamp(26px, 6vw, 38px);
+        font-weight: 800;
+        letter-spacing: -0.5px;
+      }
+      header p {
+        margin: 0;
+        color: rgba(238, 242, 230, 0.6);
+        font-size: 13.5px;
+      }
 
-  .tabs{
-    display:flex;
-    justify-content:center;
-    gap:6px;
-    margin-top:16px;
-  }
-  .tabs button{
-    font-family:'Vazirmatn', sans-serif;
-    font-weight:600;
-    font-size:13.5px;
-    padding:8px 18px;
-    border-radius:999px;
-    border:1.5px solid rgba(238,242,230,0.2);
-    background:transparent;
-    color:rgba(238,242,230,0.7);
-    cursor:pointer;
-  }
-  .tabs button.active{
-    background:var(--ball);
-    border-color:var(--ball);
-    color:var(--ink);
-  }
+      .tabs {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 16px;
+      }
+      .tabs button {
+        font-family: "Vazirmatn", sans-serif;
+        font-weight: 600;
+        font-size: 13.5px;
+        padding: 8px 18px;
+        border-radius: 999px;
+        border: 1.5px solid rgba(238, 242, 230, 0.2);
+        background: transparent;
+        color: rgba(238, 242, 230, 0.7);
+        cursor: pointer;
+      }
+      .tabs button.active {
+        background: var(--ball);
+        border-color: var(--ball);
+        color: var(--ink);
+      }
 
-  main{
-    position:relative; z-index:1;
-    max-width:640px;
-    margin:0 auto;
-    padding:24px 16px;
-  }
+      main {
+        position: relative;
+        z-index: 1;
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 24px 16px;
+      }
 
-  section{margin-bottom:26px;}
-  h2{
-    font-size:14.5px;
-    font-weight:700;
-    color:var(--ball);
-    margin:0 0 12px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-  h2::after{
-    content:"";
-    flex:1;
-    height:1px;
-    background:rgba(238,242,230,0.18);
-  }
-  .hint{
-    font-size:12.5px;
-    color:rgba(238,242,230,0.5);
-    margin:-6px 0 12px;
-  }
+      section {
+        margin-bottom: 26px;
+      }
+      h2 {
+        font-size: 14.5px;
+        font-weight: 700;
+        color: var(--ball);
+        margin: 0 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      h2::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgba(238, 242, 230, 0.18);
+      }
+      .hint {
+        font-size: 12.5px;
+        color: rgba(238, 242, 230, 0.5);
+        margin: -6px 0 12px;
+      }
 
-  /* ---- Setup: card shells ---- */
-  .panel{
-    background:var(--court-mid);
-    border:1px solid rgba(238,242,230,0.15);
-    border-radius:14px;
-    padding:18px;
-  }
+      /* ---- Setup: card shells ---- */
+      .panel {
+        background: var(--court-mid);
+        border: 1px solid rgba(238, 242, 230, 0.15);
+        border-radius: 14px;
+        padding: 18px;
+      }
 
-  /* players */
-  .player-add{
-    display:flex; gap:8px; margin-bottom:12px;
-  }
-  .player-add input{
-    flex:1;
-    min-width:0;
-    background:rgba(8,37,31,0.4);
-    border:1.5px solid rgba(238,242,230,0.2);
-    border-radius:8px;
-    color:var(--court-line);
-    font-family:'Vazirmatn', sans-serif;
-    font-size:16px;
-    padding:9px 12px;
-  }
-  .player-add button{
-    background:var(--ball);
-    color:var(--ink);
-    border:none;
-    border-radius:8px;
-    padding:0 16px;
-    font-weight:700;
-    cursor:pointer;
-  }
-  .chip-list{
-    display:flex; flex-wrap:wrap; gap:8px;
-  }
-  .chip{
-    display:flex; align-items:center; gap:6px;
-    background:rgba(238,242,230,0.1);
-    border:1px solid rgba(238,242,230,0.2);
-    border-radius:999px;
-    padding:6px 6px 6px 12px;
-    font-size:13.5px;
-  }
-  .chip button{
-    background:rgba(226,98,79,0.25);
-    border:none;
-    color:var(--court-line);
-    width:20px; height:20px;
-    border-radius:50%;
-    cursor:pointer;
-    font-size:12px;
-    line-height:1;
-  }
+      /* players */
+      .player-add {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .player-add input {
+        flex: 1;
+        min-width: 0;
+        background: rgba(8, 37, 31, 0.4);
+        border: 1.5px solid rgba(238, 242, 230, 0.2);
+        border-radius: 8px;
+        color: var(--court-line);
+        font-family: "Vazirmatn", sans-serif;
+        font-size: 16px;
+        padding: 9px 12px;
+      }
+      .player-add button {
+        background: var(--ball);
+        color: var(--ink);
+        border: none;
+        border-radius: 8px;
+        padding: 0 16px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .chip-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .chip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(238, 242, 230, 0.1);
+        border: 1px solid rgba(238, 242, 230, 0.2);
+        border-radius: 999px;
+        padding: 6px 6px 6px 12px;
+        font-size: 13.5px;
+      }
+      .chip button {
+        background: rgba(226, 98, 79, 0.25);
+        border: none;
+        color: var(--court-line);
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 12px;
+        line-height: 1;
+      }
 
-  /* team names + duration */
-  .field-row{
-    display:flex; gap:12px; flex-wrap:wrap;
-  }
-  .field{
-    flex:1; min-width:130px;
-  }
-  .field label{
-    display:block;
-    font-size:12px;
-    color:rgba(238,242,230,0.55);
-    margin-bottom:6px;
-  }
-  .field input{
-    width:100%;
-    background:rgba(8,37,31,0.4);
-    border:1.5px solid rgba(238,242,230,0.2);
-    border-radius:8px;
-    color:var(--court-line);
-    font-family:'Vazirmatn', sans-serif;
-    font-size:16px;
-    padding:9px 12px;
-  }
-  .duration-row{
-    display:flex; align-items:end; gap:10px; margin-top:14px;
-    flex-wrap:wrap;
-  }
-  .duration-row .field{flex:0 0 80px;}
-  .duration-sep{
-    padding-bottom:10px;
-    font-family:'Space Mono', monospace;
-    color:rgba(238,242,230,0.5);
-  }
+      /* team names + duration */
+      .field-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .field {
+        flex: 1;
+        min-width: 130px;
+      }
+      .field label {
+        display: block;
+        font-size: 12px;
+        color: rgba(238, 242, 230, 0.55);
+        margin-bottom: 6px;
+      }
+      .field input {
+        width: 100%;
+        background: rgba(8, 37, 31, 0.4);
+        border: 1.5px solid rgba(238, 242, 230, 0.2);
+        border-radius: 8px;
+        color: var(--court-line);
+        font-family: "Vazirmatn", sans-serif;
+        font-size: 16px;
+        padding: 9px 12px;
+      }
+      .duration-row {
+        display: flex;
+        align-items: end;
+        gap: 10px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+      }
+      .duration-row .field {
+        flex: 0 0 80px;
+      }
+      .duration-sep {
+        padding-bottom: 10px;
+        font-family: "Space Mono", monospace;
+        color: rgba(238, 242, 230, 0.5);
+      }
 
-  /* rounds builder */
-  .round-block{
-    background:rgba(8,37,31,0.3);
-    border:1px solid rgba(238,242,230,0.15);
-    border-radius:12px;
-    padding:14px;
-    margin-bottom:12px;
-  }
-  .round-block-head{
-    display:flex; align-items:center; gap:8px; margin-bottom:10px;
-  }
-  .round-block-head input{
-    flex:1;
-    min-width:0;
-    background:transparent;
-    border:none;
-    border-bottom:1.5px dashed rgba(238,242,230,0.25);
-    color:var(--court-line);
-    font-weight:700;
-    font-size:16px;
-    padding:4px 2px;
-  }
-  .round-block-head input:focus{outline:none; border-color:var(--ball);}
-  .round-del{
-    background:none; border:none; color:var(--danger);
-    cursor:pointer; font-size:13px; font-weight:600;
-    padding:4px 8px;
-  }
-  .assign-chips{
-    display:flex; flex-wrap:wrap; gap:6px;
-  }
-  .assign-chip{
-    border-radius:999px;
-    border:1.5px solid rgba(238,242,230,0.25);
-    background:transparent;
-    color:rgba(238,242,230,0.7);
-    font-size:13px;
-    padding:6px 12px;
-    cursor:pointer;
-    font-family:'Vazirmatn', sans-serif;
-  }
-  .assign-chip.team-a{
-    background:var(--ball); border-color:var(--ball); color:var(--ink); font-weight:700;
-  }
-  .assign-chip.team-b{
-    background:var(--clay); border-color:var(--clay); color:var(--ink); font-weight:700;
-  }
-  .assign-legend{
-    font-size:11.5px; color:rgba(238,242,230,0.45); margin-top:8px;
-  }
-  .add-round-btn{
-    width:100%;
-    padding:12px;
-    border-radius:10px;
-    border:1.5px dashed rgba(238,242,230,0.3);
-    background:transparent;
-    color:var(--court-line);
-    font-weight:600;
-    cursor:pointer;
-    font-family:'Vazirmatn', sans-serif;
-  }
-  .empty-note{
-    font-size:13px; color:rgba(238,242,230,0.5); text-align:center; padding:16px 0;
-  }
+      /* rounds builder */
+      .round-block {
+        background: rgba(8, 37, 31, 0.3);
+        border: 1px solid rgba(238, 242, 230, 0.15);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 12px;
+      }
+      .round-block-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .round-block-head input {
+        flex: 1;
+        min-width: 0;
+        background: transparent;
+        border: none;
+        border-bottom: 1.5px dashed rgba(238, 242, 230, 0.25);
+        color: var(--court-line);
+        font-weight: 700;
+        font-size: 16px;
+        padding: 4px 2px;
+      }
+      .round-block-head input:focus {
+        outline: none;
+        border-color: var(--ball);
+      }
+      .round-del {
+        background: none;
+        border: none;
+        color: var(--danger);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 4px 8px;
+      }
+      .assign-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .assign-chip {
+        border-radius: 999px;
+        border: 1.5px solid rgba(238, 242, 230, 0.25);
+        background: transparent;
+        color: rgba(238, 242, 230, 0.7);
+        font-size: 13px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-family: "Vazirmatn", sans-serif;
+      }
+      .assign-chip.team-a {
+        background: var(--ball);
+        border-color: var(--ball);
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .assign-chip.team-b {
+        background: var(--clay);
+        border-color: var(--clay);
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .assign-legend {
+        font-size: 11.5px;
+        color: rgba(238, 242, 230, 0.45);
+        margin-top: 8px;
+      }
+      .add-round-btn {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1.5px dashed rgba(238, 242, 230, 0.3);
+        background: transparent;
+        color: var(--court-line);
+        font-weight: 600;
+        cursor: pointer;
+        font-family: "Vazirmatn", sans-serif;
+      }
+      .empty-note {
+        font-size: 13px;
+        color: rgba(238, 242, 230, 0.5);
+        text-align: center;
+        padding: 16px 0;
+      }
 
-  /* Leaderboard */
-  .board{
-    background:var(--paper);
-    color:var(--ink);
-    border-radius:14px;
-    overflow:hidden;
-    box-shadow:0 10px 30px rgba(0,0,0,0.25);
-  }
-  .board-row{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:12px 16px;
-    border-bottom:1px solid rgba(8,37,31,0.08);
-  }
-  .board-row:last-child{border-bottom:none;}
-  .board-row .rank{
-    font-family:'Space Mono', monospace;
-    font-weight:700;
-    width:22px;
-    text-align:center;
-    color:var(--court-mid);
-  }
-  .board-row.leader .rank{color:var(--clay);}
-  .board-row .name{flex:1; font-weight:600; font-size:15px;}
-  .board-row .pts{
-    font-family:'Space Mono', monospace;
-    font-weight:700;
-    font-size:16.5px;
-    color:var(--court-deep);
-  }
-  .board-row .pts small{font-weight:400; font-size:11px; color:#7a8577; margin-left:3px;}
+      /* Leaderboard */
+      .board {
+        background: var(--paper);
+        color: var(--ink);
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      }
+      .board-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(8, 37, 31, 0.08);
+      }
+      .board-row:last-child {
+        border-bottom: none;
+      }
+      .board-row .rank {
+        font-family: "Space Mono", monospace;
+        font-weight: 700;
+        width: 22px;
+        text-align: center;
+        color: var(--court-mid);
+      }
+      .board-row.leader .rank {
+        color: var(--clay);
+      }
+      .board-row .name {
+        flex: 1;
+        font-weight: 600;
+        font-size: 15px;
+      }
+      .board-row .pts {
+        font-family: "Space Mono", monospace;
+        font-weight: 700;
+        font-size: 16.5px;
+        color: var(--court-deep);
+      }
+      .board-row .pts small {
+        font-weight: 400;
+        font-size: 11px;
+        color: #7a8577;
+        margin-left: 3px;
+      }
 
-  /* Round nav */
-  .round-nav{
-    display:flex;
-    gap:8px;
-    overflow-x:auto;
-    padding-bottom:6px;
-    scrollbar-width:none;
-  }
-  .round-nav::-webkit-scrollbar{display:none;}
-  .rn-btn{
-    flex:0 0 auto;
-    min-width:40px; height:40px;
-    padding:0 10px;
-    border-radius:10px;
-    border:1.5px solid rgba(238,242,230,0.25);
-    background:transparent;
-    color:var(--court-line);
-    font-family:'Space Mono', monospace;
-    font-weight:700;
-    font-size:14px;
-    cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .rn-btn.done{
-    background:rgba(215,230,84,0.15);
-    border-color:var(--ball-dim);
-    color:var(--ball);
-  }
-  .rn-btn.active{
-    background:var(--ball);
-    border-color:var(--ball);
-    color:var(--ink);
-  }
+      /* Round nav */
+      .round-nav {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scrollbar-width: none;
+      }
+      .round-nav::-webkit-scrollbar {
+        display: none;
+      }
+      .rn-btn {
+        flex: 0 0 auto;
+        min-width: 40px;
+        height: 40px;
+        padding: 0 10px;
+        border-radius: 10px;
+        border: 1.5px solid rgba(238, 242, 230, 0.25);
+        background: transparent;
+        color: var(--court-line);
+        font-family: "Space Mono", monospace;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .rn-btn.done {
+        background: rgba(215, 230, 84, 0.15);
+        border-color: var(--ball-dim);
+        color: var(--ball);
+      }
+      .rn-btn.active {
+        background: var(--ball);
+        border-color: var(--ball);
+        color: var(--ink);
+      }
 
-  /* Round card */
-  .round-card{
-    background:var(--court-mid);
-    border:1px solid rgba(238,242,230,0.15);
-    border-radius:16px;
-    padding:22px;
-  }
-  .matchup{
-    display:flex;
-    align-items:center;
-    gap:14px;
-    margin-bottom:18px;
-  }
-  .team{
-    flex:1;
-    text-align:center;
-  }
-  .team .label{
-    font-size:12px;
-    color:rgba(238,242,230,0.55);
-    margin-bottom:4px;
-  }
-  .team .players{
-    font-size:16.5px;
-    font-weight:700;
-    line-height:1.5;
-  }
-  .vs{
-    font-family:'Space Mono', monospace;
-    color:var(--ball);
-    font-weight:700;
-    font-size:12.5px;
-    text-align:center;
-  }
-  .rest-line{
-    text-align:center;
-    font-size:12.5px;
-    color:rgba(238,242,230,0.5);
-    margin-bottom:20px;
-  }
-  .rest-line b{color:rgba(238,242,230,0.75); font-weight:600;}
+      /* Round card */
+      .round-card {
+        background: var(--court-mid);
+        border: 1px solid rgba(238, 242, 230, 0.15);
+        border-radius: 16px;
+        padding: 22px;
+      }
+      .matchup {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+      .team {
+        flex: 1;
+        text-align: center;
+      }
+      .team .label {
+        font-size: 12px;
+        color: rgba(238, 242, 230, 0.55);
+        margin-bottom: 4px;
+      }
+      .team .players {
+        font-size: 16.5px;
+        font-weight: 700;
+        line-height: 1.5;
+      }
+      .vs {
+        font-family: "Space Mono", monospace;
+        color: var(--ball);
+        font-weight: 700;
+        font-size: 12.5px;
+        text-align: center;
+      }
+      .rest-line {
+        text-align: center;
+        font-size: 12.5px;
+        color: rgba(238, 242, 230, 0.5);
+        margin-bottom: 20px;
+      }
+      .rest-line b {
+        color: rgba(238, 242, 230, 0.75);
+        font-weight: 600;
+      }
 
-  /* Timer */
-  .timer-wrap{
-    text-align:center;
-    padding:14px 0 18px;
-    border-top:1px dashed rgba(238,242,230,0.2);
-    border-bottom:1px dashed rgba(238,242,230,0.2);
-    margin-bottom:20px;
-  }
-  .timer-display{
-    font-family:'Space Mono', monospace;
-    font-size:50px;
-    font-weight:700;
-    letter-spacing:2px;
-    color:var(--court-line);
-  }
-  .timer-display.warn{color:var(--ball);}
-  .timer-display.done{color:var(--danger);}
-  .timer-btns{
-    display:flex; gap:8px; justify-content:center; margin-top:10px;
-  }
-  .timer-btns button{
-    font-family:'Vazirmatn', sans-serif;
-    font-size:13px;
-    font-weight:600;
-    padding:8px 16px;
-    border-radius:8px;
-    border:none;
-    cursor:pointer;
-    background:rgba(238,242,230,0.12);
-    color:var(--court-line);
-  }
-  .timer-btns button.primary{
-    background:var(--ball);
-    color:var(--ink);
-  }
-  .timer-btns button:active{transform:scale(0.96);}
-  .timer-note{
-    font-size:11.5px;
-    color:rgba(238,242,230,0.4);
-    margin-top:8px;
-  }
+      /* Timer */
+      .timer-wrap {
+        text-align: center;
+        padding: 14px 0 18px;
+        border-top: 1px dashed rgba(238, 242, 230, 0.2);
+        border-bottom: 1px dashed rgba(238, 242, 230, 0.2);
+        margin-bottom: 20px;
+      }
+      .timer-display {
+        font-family: "Space Mono", monospace;
+        font-size: 50px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: var(--court-line);
+      }
+      .timer-display.warn {
+        color: var(--ball);
+      }
+      .timer-display.done {
+        color: var(--danger);
+      }
+      .timer-btns {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 10px;
+      }
+      .timer-btns button {
+        font-family: "Vazirmatn", sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        background: rgba(238, 242, 230, 0.12);
+        color: var(--court-line);
+      }
+      .timer-btns button.primary {
+        background: var(--ball);
+        color: var(--ink);
+      }
+      .timer-btns button:active {
+        transform: scale(0.96);
+      }
+      .timer-note {
+        font-size: 11.5px;
+        color: rgba(238, 242, 230, 0.4);
+        margin-top: 8px;
+      }
 
-  /* Score entry */
-  .score-row{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-bottom:16px;
-  }
-  .score-box{
-    flex:1;
-    text-align:center;
-  }
-  .score-box label{
-    display:block;
-    font-size:12px;
-    color:rgba(238,242,230,0.6);
-    margin-bottom:6px;
-  }
-  .score-box input{
-    width:100%;
-    min-width:0;
-    background:rgba(8,37,31,0.4);
-    border:1.5px solid rgba(238,242,230,0.2);
-    border-radius:10px;
-    color:var(--court-line);
-    font-family:'Space Mono', monospace;
-    font-size:22px;
-    text-align:center;
-    padding:10px 0;
-  }
-  .score-box input:focus{
-    outline:none;
-    border-color:var(--ball);
-  }
-  .score-dash{
-    color:rgba(238,242,230,0.4);
-    font-family:'Space Mono', monospace;
-    font-size:20px;
-    margin-top:14px;
-  }
+      /* Score entry */
+      .score-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .score-box {
+        flex: 1;
+        text-align: center;
+      }
+      .score-box label {
+        display: block;
+        font-size: 12px;
+        color: rgba(238, 242, 230, 0.6);
+        margin-bottom: 6px;
+      }
+      .score-box input {
+        width: 100%;
+        min-width: 0;
+        background: rgba(8, 37, 31, 0.4);
+        border: 1.5px solid rgba(238, 242, 230, 0.2);
+        border-radius: 10px;
+        color: var(--court-line);
+        font-family: "Space Mono", monospace;
+        font-size: 22px;
+        text-align: center;
+        padding: 10px 0;
+      }
+      .score-box input:focus {
+        outline: none;
+        border-color: var(--ball);
+      }
+      .score-dash {
+        color: rgba(238, 242, 230, 0.4);
+        font-family: "Space Mono", monospace;
+        font-size: 20px;
+        margin-top: 14px;
+      }
 
-  .save-btn{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:10px;
-    background:var(--ball);
-    color:var(--ink);
-    font-family:'Vazirmatn', sans-serif;
-    font-weight:700;
-    font-size:15px;
-    cursor:pointer;
-  }
-  .save-btn:active{transform:scale(0.98);}
-  .saved-tag{
-    text-align:center;
-    font-size:12.5px;
-    color:var(--ball);
-    margin-top:10px;
-  }
+      .save-btn {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 10px;
+        background: var(--ball);
+        color: var(--ink);
+        font-family: "Vazirmatn", sans-serif;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+      }
+      .save-btn:active {
+        transform: scale(0.98);
+      }
+      .saved-tag {
+        text-align: center;
+        font-size: 12.5px;
+        color: var(--ball);
+        margin-top: 10px;
+      }
 
-  footer{
-    text-align:center;
-    padding:20px;
-    font-size:12px;
-    color:rgba(238,242,230,0.35);
-  }
-  footer button{
-    background:none;
-    border:none;
-    color:rgba(238,242,230,0.45);
-    text-decoration:underline;
-    cursor:pointer;
-    font-family:'Vazirmatn', sans-serif;
-    font-size:12px;
-  }
+      footer {
+        text-align: center;
+        padding: 20px;
+        font-size: 12px;
+        color: rgba(238, 242, 230, 0.35);
+      }
+      footer button {
+        background: none;
+        border: none;
+        color: rgba(238, 242, 230, 0.45);
+        text-decoration: underline;
+        cursor: pointer;
+        font-family: "Vazirmatn", sans-serif;
+        font-size: 12px;
+      }
 
-  @media (max-width:480px){
-    header{padding:22px 14px 14px;}
-    header h1{font-size:26px;}
-    header p{font-size:12.5px;}
-    .tabs{gap:8px;}
-    .tabs button{padding:7px 14px; font-size:13px;}
-    main{padding:18px 12px;}
-    section{margin-bottom:20px;}
-    .panel, .round-card{padding:14px;}
-    .field-row{flex-direction:column;}
-    .matchup{gap:8px;}
-    .team .label{font-size:11px;}
-    .team .players{font-size:15px;}
-    .vs{font-size:11px; flex:0 0 auto; white-space:nowrap;}
-    .timer-display{font-size:clamp(36px, 12vw, 46px); letter-spacing:1px;}
-    .timer-btns button{padding:8px 12px; font-size:12.5px;}
-    .score-box input{font-size:19px; padding:9px 0;}
-    .score-dash{margin-top:12px;}
-    .board-row{padding:10px 12px;}
-    .board-row .name{font-size:14px;}
-    .board-row .pts{font-size:15px;}
-    .assign-chip{padding:5px 10px; font-size:12.5px;}
-    .rn-btn{min-width:36px; height:36px; font-size:13px;}
-  }
+      @media (max-width: 480px) {
+        header {
+          padding: 22px 14px 14px;
+        }
+        header h1 {
+          font-size: 26px;
+        }
+        header p {
+          font-size: 12.5px;
+        }
+        .tabs {
+          gap: 8px;
+        }
+        .tabs button {
+          padding: 7px 14px;
+          font-size: 13px;
+        }
+        main {
+          padding: 18px 12px;
+        }
+        section {
+          margin-bottom: 20px;
+        }
+        .panel,
+        .round-card {
+          padding: 14px;
+        }
+        .field-row {
+          flex-direction: column;
+        }
+        .matchup {
+          gap: 8px;
+        }
+        .team .label {
+          font-size: 11px;
+        }
+        .team .players {
+          font-size: 15px;
+        }
+        .vs {
+          font-size: 11px;
+          flex: 0 0 auto;
+          white-space: nowrap;
+        }
+        .timer-display {
+          font-size: clamp(36px, 12vw, 46px);
+          letter-spacing: 1px;
+        }
+        .timer-btns button {
+          padding: 8px 12px;
+          font-size: 12.5px;
+        }
+        .score-box input {
+          font-size: 19px;
+          padding: 9px 0;
+        }
+        .score-dash {
+          margin-top: 12px;
+        }
+        .board-row {
+          padding: 10px 12px;
+        }
+        .board-row .name {
+          font-size: 14px;
+        }
+        .board-row .pts {
+          font-size: 15px;
+        }
+        .assign-chip {
+          padding: 5px 10px;
+          font-size: 12.5px;
+        }
+        .rn-btn {
+          min-width: 36px;
+          height: 36px;
+          font-size: 13px;
+        }
+      }
 
-  @media (max-width:360px){
-    .timer-display{font-size:32px;}
-    header h1{font-size:23px;}
-  }
-</style>
-</head>
-<body>
+      @media (max-width: 360px) {
+        .timer-display {
+          font-size: 32px;
+        }
+        header h1 {
+          font-size: 23px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="lines"></div>
 
-<div class="lines"></div>
+    <header>
+      <div class="eyebrow">CUSTOM ROUNDS · LIVE SCORING</div>
+      <h1>Padel Night Tracker</h1>
+      <p>Set your players and rounds, then play</p>
+      <div class="tabs">
+        <button id="tabSetup">Setup</button>
+        <button id="tabPlay">Play</button>
+        <button id="tabHistory">History</button>
+      </div>
+    </header>
 
-<header>
-  <div class="eyebrow">CUSTOM ROUNDS · LIVE SCORING</div>
-  <h1>Padel Night Tracker</h1>
-  <p>Set your players and rounds, then play</p>
-  <div class="tabs">
-    <button id="tabSetup">Setup</button>
-    <button id="tabPlay">Play</button>
-    <button id="tabHistory">History</button>
-  </div>
-</header>
+    <main id="main"></main>
 
-<main id="main"></main>
+    <footer>
+      <button id="resetBtn">Reset everything</button>
+    </footer>
 
-<footer>
-  <button id="resetBtn">Reset everything</button>
-</footer>
+    <script>
+      const STORAGE_KEY = "padel-tracker-v3";
 
-<script>
-const STORAGE_KEY = "padel-tracker-v3";
+      const HISTORY_KEY = "padel-tracker-history-v1";
 
-const HISTORY_KEY = "padel-tracker-history-v1";
+      function defaultState() {
+        return {
+          view: "setup",
+          players: [],
+          teamNames: { a: "", b: "" },
+          roundDurationSec: 8 * 60,
+          rounds: [],
+          scores: [],
+          current: 0,
+          sharing: false,
+          shareBucket: null,
+        };
+      }
 
-function defaultState(){
-  return {
-    view: "setup",
-    players: [],
-    teamNames: { a: "", b: "" },
-    roundDurationSec: 8*60,
-    rounds: [],
-    scores: [],
-    current: 0,
-    sharing: false,
-    shareBucket: null,
-  };
-}
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.players && parsed.rounds) return parsed;
+          }
+        } catch (e) {}
+        return defaultState();
+      }
 
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){
-      const parsed = JSON.parse(raw);
-      if(parsed && parsed.players && parsed.rounds) return parsed;
-    }
-  }catch(e){}
-  return defaultState();
-}
+      function loadHistory() {
+        try {
+          const raw = localStorage.getItem(HISTORY_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed;
+          }
+        } catch (e) {}
+        return [];
+      }
 
-function loadHistory(){
-  try{
-    const raw = localStorage.getItem(HISTORY_KEY);
-    if(raw){
-      const parsed = JSON.parse(raw);
-      if(Array.isArray(parsed)) return parsed;
-    }
-  }catch(e){}
-  return [];
-}
+      function saveHistory() {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      }
 
-function saveHistory(){
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-}
+      let state = loadState();
+      let history = loadHistory();
+      if (state.sharing === undefined) state.sharing = false;
+      if (state.shareBucket === undefined) state.shareBucket = null;
+      syncScores();
 
-let state = loadState();
-let history = loadHistory();
-if(state.sharing === undefined) state.sharing = false;
-if(state.shareBucket === undefined) state.shareBucket = null;
-syncScores();
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
 
-function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
+      /* ---------------- LIVE SHARE (kvdb.io free relay) ---------------- */
+      const KVDB_BASE = "https://kvdb.io";
 
-/* ---------------- LIVE SHARE (kvdb.io free relay) ---------------- */
-const KVDB_BASE = "https://kvdb.io";
+      const SHARE_EMAIL = "safari.arash@gmail.com";
 
-async function createShareBucket(){
-  const res = await fetch(KVDB_BASE + "/", { method:"POST", body:"" });
-  if(!res.ok) throw new Error("bucket create failed");
-  const id = (await res.text()).trim();
-  if(!id) throw new Error("empty bucket id");
-  return id;
-}
+      async function createShareBucket() {
+        if (!SHARE_EMAIL) {
+          throw new Error("Email address is required to create a live link.");
+        }
 
-async function pushShareSnapshot(){
-  if(!state.sharing || !state.shareBucket) return;
-  const snapshot = {
-    teamNames: state.teamNames,
-    players: state.players,
-    rounds: state.rounds,
-    scores: state.scores,
-    current: state.current,
-    updatedAt: Date.now(),
-  };
-  try{
-    await fetch(`${KVDB_BASE}/${state.shareBucket}/state`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(snapshot),
-    });
-  }catch(e){ /* best-effort; ignore network errors */ }
-}
+        const res = await fetch(KVDB_BASE, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            email: SHARE_EMAIL,
+          }),
+        });
 
-let shareInterval = null;
-function manageShareInterval(){
-  if(shareInterval){ clearInterval(shareInterval); shareInterval = null; }
-  if(state.view === "play" && state.sharing && state.shareBucket){
-    pushShareSnapshot();
-    shareInterval = setInterval(pushShareSnapshot, 6000);
-  }
-}
+        if (!res.ok) throw new Error("bucket create failed");
 
-function shareLink(){
-  const url = new URL(location.href);
-  url.search = "";
-  url.searchParams.set("live", state.shareBucket);
-  return url.toString();
-}
+        const id = (await res.text()).trim();
 
-function syncScores(){
-  const n = state.rounds.length;
-  const cur = state.scores || [];
-  const next = [];
-  for(let i=0;i<n;i++){
-    next.push(cur[i] || {a:"", b:"", done:false});
-  }
-  state.scores = next;
-  if(state.current >= n) state.current = Math.max(0, n-1);
-}
+        if (!id) throw new Error("empty bucket id");
 
-function fmt(n){ return String(n).padStart(2,"0"); }
+        return id;
+      }
 
-/* ---------------- AUDIO (30s warning bell + finish) ---------------- */
-let audioCtx = null;
-function ensureAudio(){
-  if(!audioCtx){
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if(audioCtx.state === "suspended") audioCtx.resume();
-}
-function beep(freq, start, dur, gainVal=0.28){
-  if(!audioCtx) return;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = "sine";
-  osc.frequency.value = freq;
-  gain.gain.setValueAtTime(0, audioCtx.currentTime + start);
-  gain.gain.linearRampToValueAtTime(gainVal, audioCtx.currentTime + start + 0.02);
-  gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + start + dur);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start(audioCtx.currentTime + start);
-  osc.stop(audioCtx.currentTime + start + dur + 0.05);
-}
-function playWarningBell(){
-  ensureAudio();
-  beep(1046, 0, 0.18);
-  beep(1046, 0.28, 0.18);
-}
-function playFinishBell(){
-  ensureAudio();
-  beep(880, 0, 0.2);
-  beep(660, 0.24, 0.2);
-  beep(523, 0.48, 0.35);
-}
+      async function pushShareSnapshot() {
+        if (!state.sharing || !state.shareBucket) return;
+        const snapshot = {
+          teamNames: state.teamNames,
+          players: state.players,
+          rounds: state.rounds,
+          scores: state.scores,
+          current: state.current,
+          updatedAt: Date.now(),
+        };
+        try {
+          await fetch(`${KVDB_BASE}/${state.shareBucket}/state`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(snapshot),
+          });
+        } catch (e) {
+          /* best-effort; ignore network errors */
+        }
+      }
 
-/* ---------------- TIMER ---------------- */
-let timerInterval = null;
-let timeLeft = state.roundDurationSec;
-let timerRoundIndex = null;
-let warnedThisRound = false;
+      let shareInterval = null;
+      function manageShareInterval() {
+        if (shareInterval) {
+          clearInterval(shareInterval);
+          shareInterval = null;
+        }
+        if (state.view === "play" && state.sharing && state.shareBucket) {
+          pushShareSnapshot();
+          shareInterval = setInterval(pushShareSnapshot, 6000);
+        }
+      }
 
-function stopTimer(){
-  if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
-}
-function resetTimerForRound(idx){
-  stopTimer();
-  timeLeft = state.roundDurationSec;
-  timerRoundIndex = idx;
-  warnedThisRound = false;
-  updateTimerDisplay();
-}
-function updateTimerDisplay(){
-  const el = document.getElementById("timerDisplay");
-  if(!el) return;
-  const m = Math.floor(timeLeft/60);
-  const s = timeLeft%60;
-  el.textContent = `${fmt(m)}:${fmt(s)}`;
-  el.classList.toggle("warn", timeLeft>0 && timeLeft<=30);
-  el.classList.toggle("done", timeLeft===0);
-}
-function startTimer(){
-  ensureAudio();
-  if(timerInterval || timeLeft<=0) return;
-  timerInterval = setInterval(()=>{
-    timeLeft--;
-    if(timeLeft===30 && !warnedThisRound){
-      warnedThisRound = true;
-      playWarningBell();
-    }
-    updateTimerDisplay();
-    if(timeLeft<=0){
-      stopTimer();
-      playFinishBell();
-      if(navigator.vibrate) navigator.vibrate([200,100,200]);
-    }
-  }, 1000);
-}
+      function shareLink() {
+        const url = new URL(location.href);
+        url.search = "";
+        url.searchParams.set("live", state.shareBucket);
+        return url.toString();
+      }
 
-/* ---------------- SCORING HELPERS ---------------- */
-function computeTotalsFor(players, rounds, scores){
-  const totals = {};
-  const played = {};
-  players.forEach(p=>{ totals[p]=0; played[p]=0; });
-  rounds.forEach((r,i)=>{
-    const sc = scores[i];
-    if(!sc || !sc.done) return;
-    const av = parseInt(sc.a)||0, bv = parseInt(sc.b)||0;
-    r.a.forEach(p=>{ if(totals[p]===undefined){totals[p]=0;played[p]=0;} totals[p]+=av; played[p]++; });
-    r.b.forEach(p=>{ if(totals[p]===undefined){totals[p]=0;played[p]=0;} totals[p]+=bv; played[p]++; });
-  });
-  return {totals, played};
-}
-function computeTotals(){
-  return computeTotalsFor(state.players, state.rounds, state.scores);
-}
-function restOf(round){
-  const used = new Set([...round.a, ...round.b]);
-  return state.players.filter(p=>!used.has(p));
-}
+      function syncScores() {
+        const n = state.rounds.length;
+        const cur = state.scores || [];
+        const next = [];
+        for (let i = 0; i < n; i++) {
+          next.push(cur[i] || { a: "", b: "", done: false });
+        }
+        state.scores = next;
+        if (state.current >= n) state.current = Math.max(0, n - 1);
+      }
 
-/* ---------------- RENDER: SHELL ---------------- */
-function render(){
-  document.getElementById("tabSetup").classList.toggle("active", state.view==="setup");
-  document.getElementById("tabPlay").classList.toggle("active", state.view==="play");
-  document.getElementById("tabHistory").classList.toggle("active", state.view==="history");
-  const main = document.getElementById("main");
-  main.innerHTML = "";
-  if(state.view === "setup"){
-    main.appendChild(renderSetup());
-  } else if(state.view === "history"){
-    main.appendChild(renderHistory());
-  } else {
-    main.appendChild(renderPlay());
-  }
-  saveState();
-  manageShareInterval();
-}
+      function fmt(n) {
+        return String(n).padStart(2, "0");
+      }
 
-document.getElementById("tabSetup").onclick = ()=>{ stopTimer(); state.view="setup"; render(); };
-document.getElementById("tabPlay").onclick = ()=>{ state.view="play"; render(); };
-document.getElementById("tabHistory").onclick = ()=>{ stopTimer(); state.view="history"; render(); };
-let resetArmed = false;
-let resetArmTimeout = null;
-const resetBtn = document.getElementById("resetBtn");
-resetBtn.onclick = ()=>{
-  if(!resetArmed){
-    resetArmed = true;
-    resetBtn.textContent = "Tap again to confirm";
-    clearTimeout(resetArmTimeout);
-    resetArmTimeout = setTimeout(()=>{
-      resetArmed = false;
-      resetBtn.textContent = "Reset everything";
-    }, 4000);
-    return;
-  }
-  resetArmed = false;
-  clearTimeout(resetArmTimeout);
-  resetBtn.textContent = "Reset everything";
-  stopTimer();
-  timerRoundIndex = null;
-  state = defaultState();
-  render();
-};
+      /* ---------------- AUDIO (30s warning bell + finish) ---------------- */
+      let audioCtx = null;
+      function ensureAudio() {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === "suspended") audioCtx.resume();
+      }
+      function beep(freq, start, dur, gainVal = 0.28) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, audioCtx.currentTime + start);
+        gain.gain.linearRampToValueAtTime(
+          gainVal,
+          audioCtx.currentTime + start + 0.02,
+        );
+        gain.gain.linearRampToValueAtTime(
+          0,
+          audioCtx.currentTime + start + dur,
+        );
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + start);
+        osc.stop(audioCtx.currentTime + start + dur + 0.05);
+      }
+      function playWarningBell() {
+        ensureAudio();
+        beep(1046, 0, 0.18);
+        beep(1046, 0.28, 0.18);
+      }
+      function playFinishBell() {
+        ensureAudio();
+        beep(880, 0, 0.2);
+        beep(660, 0.24, 0.2);
+        beep(523, 0.48, 0.35);
+      }
 
-/* ---------------- RENDER: SETUP ---------------- */
-function renderSetup(){
-  const wrap = document.createElement("div");
+      /* ---------------- TIMER ---------------- */
+      let timerInterval = null;
+      let timeLeft = state.roundDurationSec;
+      let timerRoundIndex = null;
+      let warnedThisRound = false;
 
-  // Players
-  const playersSection = document.createElement("section");
-  playersSection.innerHTML = `<h2>Players</h2>`;
-  const panel1 = document.createElement("div");
-  panel1.className = "panel";
-  panel1.innerHTML = `
+      function stopTimer() {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+      }
+      function resetTimerForRound(idx) {
+        stopTimer();
+        timeLeft = state.roundDurationSec;
+        timerRoundIndex = idx;
+        warnedThisRound = false;
+        updateTimerDisplay();
+      }
+      function updateTimerDisplay() {
+        const el = document.getElementById("timerDisplay");
+        if (!el) return;
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        el.textContent = `${fmt(m)}:${fmt(s)}`;
+        el.classList.toggle("warn", timeLeft > 0 && timeLeft <= 30);
+        el.classList.toggle("done", timeLeft === 0);
+      }
+      function startTimer() {
+        ensureAudio();
+        if (timerInterval || timeLeft <= 0) return;
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          if (timeLeft === 30 && !warnedThisRound) {
+            warnedThisRound = true;
+            playWarningBell();
+          }
+          updateTimerDisplay();
+          if (timeLeft <= 0) {
+            stopTimer();
+            playFinishBell();
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+          }
+        }, 1000);
+      }
+
+      /* ---------------- SCORING HELPERS ---------------- */
+      function computeTotalsFor(players, rounds, scores) {
+        const totals = {};
+        const played = {};
+        players.forEach((p) => {
+          totals[p] = 0;
+          played[p] = 0;
+        });
+        rounds.forEach((r, i) => {
+          const sc = scores[i];
+          if (!sc || !sc.done) return;
+          const av = parseInt(sc.a) || 0,
+            bv = parseInt(sc.b) || 0;
+          r.a.forEach((p) => {
+            if (totals[p] === undefined) {
+              totals[p] = 0;
+              played[p] = 0;
+            }
+            totals[p] += av;
+            played[p]++;
+          });
+          r.b.forEach((p) => {
+            if (totals[p] === undefined) {
+              totals[p] = 0;
+              played[p] = 0;
+            }
+            totals[p] += bv;
+            played[p]++;
+          });
+        });
+        return { totals, played };
+      }
+      function computeTotals() {
+        return computeTotalsFor(state.players, state.rounds, state.scores);
+      }
+      function restOf(round) {
+        const used = new Set([...round.a, ...round.b]);
+        return state.players.filter((p) => !used.has(p));
+      }
+
+      /* ---------------- RENDER: SHELL ---------------- */
+      function render() {
+        document
+          .getElementById("tabSetup")
+          .classList.toggle("active", state.view === "setup");
+        document
+          .getElementById("tabPlay")
+          .classList.toggle("active", state.view === "play");
+        document
+          .getElementById("tabHistory")
+          .classList.toggle("active", state.view === "history");
+        const main = document.getElementById("main");
+        main.innerHTML = "";
+        if (state.view === "setup") {
+          main.appendChild(renderSetup());
+        } else if (state.view === "history") {
+          main.appendChild(renderHistory());
+        } else {
+          main.appendChild(renderPlay());
+        }
+        saveState();
+        manageShareInterval();
+      }
+
+      document.getElementById("tabSetup").onclick = () => {
+        stopTimer();
+        state.view = "setup";
+        render();
+      };
+      document.getElementById("tabPlay").onclick = () => {
+        state.view = "play";
+        render();
+      };
+      document.getElementById("tabHistory").onclick = () => {
+        stopTimer();
+        state.view = "history";
+        render();
+      };
+      let resetArmed = false;
+      let resetArmTimeout = null;
+      const resetBtn = document.getElementById("resetBtn");
+      resetBtn.onclick = () => {
+        if (!resetArmed) {
+          resetArmed = true;
+          resetBtn.textContent = "Tap again to confirm";
+          clearTimeout(resetArmTimeout);
+          resetArmTimeout = setTimeout(() => {
+            resetArmed = false;
+            resetBtn.textContent = "Reset everything";
+          }, 4000);
+          return;
+        }
+        resetArmed = false;
+        clearTimeout(resetArmTimeout);
+        resetBtn.textContent = "Reset everything";
+        stopTimer();
+        timerRoundIndex = null;
+        state = defaultState();
+        render();
+      };
+
+      /* ---------------- RENDER: SETUP ---------------- */
+      function renderSetup() {
+        const wrap = document.createElement("div");
+
+        // Players
+        const playersSection = document.createElement("section");
+        playersSection.innerHTML = `<h2>Players</h2>`;
+        const panel1 = document.createElement("div");
+        panel1.className = "panel";
+        panel1.innerHTML = `
     <div class="player-add">
       <input type="text" id="newPlayerInput" placeholder="Add a player name">
       <button id="addPlayerBtn">Add</button>
     </div>
     <div class="chip-list" id="playerChips"></div>
   `;
-  playersSection.appendChild(panel1);
-  wrap.appendChild(playersSection);
+        playersSection.appendChild(panel1);
+        wrap.appendChild(playersSection);
 
-  const chipList = panel1.querySelector("#playerChips");
-  state.players.forEach(p=>{
-    const chip = document.createElement("div");
-    chip.className = "chip";
-    chip.innerHTML = `<span>${escapeHtml(p)}</span>`;
-    const rm = document.createElement("button");
-    rm.textContent = "×";
-    rm.onclick = ()=>{
-      state.players = state.players.filter(x=>x!==p);
-      state.rounds.forEach(r=>{
-        r.a = r.a.filter(x=>x!==p);
-        r.b = r.b.filter(x=>x!==p);
-      });
-      render();
-    };
-    chip.appendChild(rm);
-    chipList.appendChild(chip);
-  });
-  panel1.querySelector("#addPlayerBtn").onclick = addPlayer;
-  panel1.querySelector("#newPlayerInput").addEventListener("keydown", e=>{
-    if(e.key === "Enter") addPlayer();
-  });
-  function addPlayer(){
-    const input = panel1.querySelector("#newPlayerInput");
-    const name = input.value.trim();
-    if(!name) return;
-    if(state.players.includes(name)){ input.value=""; return; }
-    state.players.push(name);
-    render();
-  }
+        const chipList = panel1.querySelector("#playerChips");
+        state.players.forEach((p) => {
+          const chip = document.createElement("div");
+          chip.className = "chip";
+          chip.innerHTML = `<span>${escapeHtml(p)}</span>`;
+          const rm = document.createElement("button");
+          rm.textContent = "×";
+          rm.onclick = () => {
+            state.players = state.players.filter((x) => x !== p);
+            state.rounds.forEach((r) => {
+              r.a = r.a.filter((x) => x !== p);
+              r.b = r.b.filter((x) => x !== p);
+            });
+            render();
+          };
+          chip.appendChild(rm);
+          chipList.appendChild(chip);
+        });
+        panel1.querySelector("#addPlayerBtn").onclick = addPlayer;
+        panel1
+          .querySelector("#newPlayerInput")
+          .addEventListener("keydown", (e) => {
+            if (e.key === "Enter") addPlayer();
+          });
+        function addPlayer() {
+          const input = panel1.querySelector("#newPlayerInput");
+          const name = input.value.trim();
+          if (!name) return;
+          if (state.players.includes(name)) {
+            input.value = "";
+            return;
+          }
+          state.players.push(name);
+          render();
+        }
 
-  // Team names + round length
-  const matchSection = document.createElement("section");
-  matchSection.innerHTML = `<h2>Match settings</h2>`;
-  const panel2 = document.createElement("div");
-  panel2.className = "panel";
-  const mins = Math.floor(state.roundDurationSec/60);
-  const secs = state.roundDurationSec%60;
-  panel2.innerHTML = `
+        // Team names + round length
+        const matchSection = document.createElement("section");
+        matchSection.innerHTML = `<h2>Match settings</h2>`;
+        const panel2 = document.createElement("div");
+        panel2.className = "panel";
+        const mins = Math.floor(state.roundDurationSec / 60);
+        const secs = state.roundDurationSec % 60;
+        panel2.innerHTML = `
     <div class="field-row">
       <div class="field">
         <label>Team 1 name</label>
@@ -879,187 +1100,216 @@ function renderSetup(){
       </div>
     </div>
   `;
-  matchSection.appendChild(panel2);
-  wrap.appendChild(matchSection);
+        matchSection.appendChild(panel2);
+        wrap.appendChild(matchSection);
 
-  panel2.querySelector("#teamAName").addEventListener("input", e=>{
-    state.teamNames.a = e.target.value; saveState();
-  });
-  panel2.querySelector("#teamBName").addEventListener("input", e=>{
-    state.teamNames.b = e.target.value; saveState();
-  });
-  function applyDuration(){
-    const m = parseInt(panel2.querySelector("#durMin").value)||0;
-    const s = parseInt(panel2.querySelector("#durSec").value)||0;
-    state.roundDurationSec = Math.max(0, m*60+s);
-    saveState();
-  }
-  panel2.querySelector("#durMin").addEventListener("change", applyDuration);
-  panel2.querySelector("#durSec").addEventListener("change", applyDuration);
+        panel2.querySelector("#teamAName").addEventListener("input", (e) => {
+          state.teamNames.a = e.target.value;
+          saveState();
+        });
+        panel2.querySelector("#teamBName").addEventListener("input", (e) => {
+          state.teamNames.b = e.target.value;
+          saveState();
+        });
+        function applyDuration() {
+          const m = parseInt(panel2.querySelector("#durMin").value) || 0;
+          const s = parseInt(panel2.querySelector("#durSec").value) || 0;
+          state.roundDurationSec = Math.max(0, m * 60 + s);
+          saveState();
+        }
+        panel2
+          .querySelector("#durMin")
+          .addEventListener("change", applyDuration);
+        panel2
+          .querySelector("#durSec")
+          .addEventListener("change", applyDuration);
 
-  // Rounds
-  const roundsSection = document.createElement("section");
-  roundsSection.innerHTML = `<h2>Rounds</h2>`;
-  const hint = document.createElement("div");
-  hint.className = "hint";
-  hint.textContent = "Tap a player to cycle: resting → " + (state.teamNames.a||"Team 1") + " → " + (state.teamNames.b||"Team 2") + " → resting.";
-  roundsSection.appendChild(hint);
+        // Rounds
+        const roundsSection = document.createElement("section");
+        roundsSection.innerHTML = `<h2>Rounds</h2>`;
+        const hint = document.createElement("div");
+        hint.className = "hint";
+        hint.textContent =
+          "Tap a player to cycle: resting → " +
+          (state.teamNames.a || "Team 1") +
+          " → " +
+          (state.teamNames.b || "Team 2") +
+          " → resting.";
+        roundsSection.appendChild(hint);
 
-  if(state.players.length < 2){
-    const note = document.createElement("div");
-    note.className = "empty-note";
-    note.textContent = "Add at least 2 players to build rounds.";
-    roundsSection.appendChild(note);
-  }
+        if (state.players.length < 2) {
+          const note = document.createElement("div");
+          note.className = "empty-note";
+          note.textContent = "Add at least 2 players to build rounds.";
+          roundsSection.appendChild(note);
+        }
 
-  state.rounds.forEach((r, idx)=>{
-    const block = document.createElement("div");
-    block.className = "round-block";
-    const head = document.createElement("div");
-    head.className = "round-block-head";
-    head.innerHTML = `
-      <input type="text" placeholder="Round ${idx+1}" value="${escapeHtml(r.label||"")}">
+        state.rounds.forEach((r, idx) => {
+          const block = document.createElement("div");
+          block.className = "round-block";
+          const head = document.createElement("div");
+          head.className = "round-block-head";
+          head.innerHTML = `
+      <input type="text" placeholder="Round ${idx + 1}" value="${escapeHtml(r.label || "")}">
       <button class="round-del">Remove</button>
     `;
-    head.querySelector("input").addEventListener("input", e=>{
-      r.label = e.target.value; saveState();
-    });
-    head.querySelector(".round-del").onclick = ()=>{
-      state.rounds.splice(idx,1);
-      syncScores();
-      render();
-    };
-    block.appendChild(head);
+          head.querySelector("input").addEventListener("input", (e) => {
+            r.label = e.target.value;
+            saveState();
+          });
+          head.querySelector(".round-del").onclick = () => {
+            state.rounds.splice(idx, 1);
+            syncScores();
+            render();
+          };
+          block.appendChild(head);
 
-    const chips = document.createElement("div");
-    chips.className = "assign-chips";
-    state.players.forEach(p=>{
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "assign-chip";
-      let cls = "";
-      if(r.a.includes(p)) cls = "team-a";
-      else if(r.b.includes(p)) cls = "team-b";
-      if(cls) btn.classList.add(cls);
-      btn.textContent = p;
-      btn.onclick = ()=>{
-        if(r.a.includes(p)){
-          r.a = r.a.filter(x=>x!==p);
-          r.b.push(p);
-        } else if(r.b.includes(p)){
-          r.b = r.b.filter(x=>x!==p);
-        } else {
-          r.a.push(p);
+          const chips = document.createElement("div");
+          chips.className = "assign-chips";
+          state.players.forEach((p) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "assign-chip";
+            let cls = "";
+            if (r.a.includes(p)) cls = "team-a";
+            else if (r.b.includes(p)) cls = "team-b";
+            if (cls) btn.classList.add(cls);
+            btn.textContent = p;
+            btn.onclick = () => {
+              if (r.a.includes(p)) {
+                r.a = r.a.filter((x) => x !== p);
+                r.b.push(p);
+              } else if (r.b.includes(p)) {
+                r.b = r.b.filter((x) => x !== p);
+              } else {
+                r.a.push(p);
+              }
+              render();
+            };
+            chips.appendChild(btn);
+          });
+          block.appendChild(chips);
+
+          const legend = document.createElement("div");
+          legend.className = "assign-legend";
+          const restNames = restOf(r);
+          legend.textContent = `Resting: ${restNames.length ? restNames.join(", ") : "—"}`;
+          block.appendChild(legend);
+
+          roundsSection.appendChild(block);
+        });
+
+        const addBtn = document.createElement("button");
+        addBtn.className = "add-round-btn";
+        addBtn.textContent = "+ Add round";
+        addBtn.onclick = () => {
+          state.rounds.push({ label: "", a: [], b: [] });
+          syncScores();
+          render();
+        };
+        roundsSection.appendChild(addBtn);
+
+        wrap.appendChild(roundsSection);
+
+        const goPlay = document.createElement("button");
+        goPlay.className = "save-btn";
+        goPlay.textContent = "Go to Play →";
+        goPlay.onclick = () => {
+          state.view = "play";
+          render();
+        };
+        wrap.appendChild(goPlay);
+
+        return wrap;
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+
+      /* ---------------- RENDER: PLAY ---------------- */
+      function renderPlay() {
+        const wrap = document.createElement("div");
+
+        if (state.rounds.length === 0) {
+          const note = document.createElement("div");
+          note.className = "empty-note";
+          note.textContent =
+            "No rounds defined yet — go to Setup to add players and rounds.";
+          wrap.appendChild(note);
+          return wrap;
         }
-        render();
-      };
-      chips.appendChild(btn);
-    });
-    block.appendChild(chips);
 
-    const legend = document.createElement("div");
-    legend.className = "assign-legend";
-    const restNames = restOf(r);
-    legend.textContent = `Resting: ${restNames.length ? restNames.join(", ") : "—"}`;
-    block.appendChild(legend);
-
-    roundsSection.appendChild(block);
-  });
-
-  const addBtn = document.createElement("button");
-  addBtn.className = "add-round-btn";
-  addBtn.textContent = "+ Add round";
-  addBtn.onclick = ()=>{
-    state.rounds.push({label:"", a:[], b:[]});
-    syncScores();
-    render();
-  };
-  roundsSection.appendChild(addBtn);
-
-  wrap.appendChild(roundsSection);
-
-  const goPlay = document.createElement("button");
-  goPlay.className = "save-btn";
-  goPlay.textContent = "Go to Play →";
-  goPlay.onclick = ()=>{ state.view="play"; render(); };
-  wrap.appendChild(goPlay);
-
-  return wrap;
-}
-
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
-
-/* ---------------- RENDER: PLAY ---------------- */
-function renderPlay(){
-  const wrap = document.createElement("div");
-
-  if(state.rounds.length === 0){
-    const note = document.createElement("div");
-    note.className = "empty-note";
-    note.textContent = "No rounds defined yet — go to Setup to add players and rounds.";
-    wrap.appendChild(note);
-    return wrap;
-  }
-
-  // Leaderboard
-  const boardSection = document.createElement("section");
-  boardSection.innerHTML = `<h2>Leaderboard</h2>`;
-  const board = document.createElement("div");
-  board.className = "board";
-  const {totals, played} = computeTotals();
-  const sorted = [...state.players].sort((x,y)=> totals[y]-totals[x]);
-  sorted.forEach((p, idx)=>{
-    const row = document.createElement("div");
-    row.className = "board-row" + (idx===0 && totals[p]>0 ? " leader" : "");
-    row.innerHTML = `
-      <div class="rank">${idx+1}</div>
+        // Leaderboard
+        const boardSection = document.createElement("section");
+        boardSection.innerHTML = `<h2>Leaderboard</h2>`;
+        const board = document.createElement("div");
+        board.className = "board";
+        const { totals, played } = computeTotals();
+        const sorted = [...state.players].sort((x, y) => totals[y] - totals[x]);
+        sorted.forEach((p, idx) => {
+          const row = document.createElement("div");
+          row.className =
+            "board-row" + (idx === 0 && totals[p] > 0 ? " leader" : "");
+          row.innerHTML = `
+      <div class="rank">${idx + 1}</div>
       <div class="name">${escapeHtml(p)}</div>
       <div class="pts">${totals[p]}<small>/ ${played[p]} rd</small></div>
     `;
-    board.appendChild(row);
-  });
-  boardSection.appendChild(board);
-  wrap.appendChild(boardSection);
+          board.appendChild(row);
+        });
+        boardSection.appendChild(board);
+        wrap.appendChild(boardSection);
 
-  // Live share
-  const shareSection = document.createElement("section");
-  shareSection.innerHTML = `<h2>Live share</h2>`;
-  const sharePanel = document.createElement("div");
-  sharePanel.className = "panel";
+        // Live share
+        const shareSection = document.createElement("section");
+        shareSection.innerHTML = `<h2>Live share</h2>`;
+        const sharePanel = document.createElement("div");
+        sharePanel.className = "panel";
 
-  if(!state.sharing || !state.shareBucket){
-    sharePanel.innerHTML = `
+        if (!state.sharing || !state.shareBucket) {
+          sharePanel.innerHTML = `
       <div class="hint" style="margin-top:0;">Share a read-only link so others can follow the leaderboard live, without editing anything.</div>
       <button class="save-btn" id="startShareBtn">Share live table</button>
     `;
-    shareSection.appendChild(sharePanel);
-    wrap.appendChild(shareSection);
-    setTimeout(()=>{
-      const btn = document.getElementById("startShareBtn");
-      if(!btn) return;
-      btn.onclick = async ()=>{
-        btn.disabled = true;
-        btn.textContent = "Creating link…";
-        try{
-          if(!state.shareBucket){
-            state.shareBucket = await createShareBucket();
-          }
-          state.sharing = true;
-          saveState();
-          await pushShareSnapshot();
-          render();
-        }catch(e){
-          btn.disabled = false;
-          btn.textContent = "Share live table";
-          alert("Couldn't create a live link right now. Check your connection and try again.");
-        }
-      };
-    }, 0);
-  } else {
-    const link = shareLink();
-    sharePanel.innerHTML = `
+          shareSection.appendChild(sharePanel);
+          wrap.appendChild(shareSection);
+          setTimeout(() => {
+            const btn = document.getElementById("startShareBtn");
+            if (!btn) return;
+            btn.onclick = async () => {
+              btn.disabled = true;
+              btn.textContent = "Creating link…";
+              try {
+                if (!state.shareBucket) {
+                  state.shareBucket = await createShareBucket();
+                }
+                state.sharing = true;
+                saveState();
+                await pushShareSnapshot();
+                render();
+              } catch (e) {
+                btn.disabled = false;
+                btn.textContent = "Share live table";
+                alert(
+                  "Couldn't create a live link right now. Check your connection and try again.",
+                );
+              }
+            };
+          }, 0);
+        } else {
+          const link = shareLink();
+          sharePanel.innerHTML = `
       <div class="hint" style="margin-top:0;">Anyone with this link sees the leaderboard update live — they can't edit anything.</div>
       <div class="field">
         <input type="text" id="shareLinkInput" readonly value="${escapeHtml(link)}" style="width:100%; background:rgba(8,37,31,0.4); border:1.5px solid rgba(238,242,230,0.2); border-radius:8px; color:var(--court-line); font-family:'Space Mono', monospace; font-size:13px; padding:9px 12px;">
@@ -1069,92 +1319,106 @@ function renderPlay(){
         <button id="stopShareBtn">Stop sharing</button>
       </div>
     `;
-    shareSection.appendChild(sharePanel);
-    wrap.appendChild(shareSection);
-    setTimeout(()=>{
-      const copyBtn = document.getElementById("copyShareBtn");
-      const stopBtn = document.getElementById("stopShareBtn");
-      const input = document.getElementById("shareLinkInput");
-      if(copyBtn) copyBtn.onclick = ()=>{
-        input.select();
-        navigator.clipboard && navigator.clipboard.writeText(link).catch(()=>{});
-        copyBtn.textContent = "Copied!";
-        setTimeout(()=>{ copyBtn.textContent = "Copy link"; }, 1500);
-      };
-      if(stopBtn) stopBtn.onclick = ()=>{
-        state.sharing = false;
-        saveState();
-        render();
-      };
-    }, 0);
-  }
+          shareSection.appendChild(sharePanel);
+          wrap.appendChild(shareSection);
+          setTimeout(() => {
+            const copyBtn = document.getElementById("copyShareBtn");
+            const stopBtn = document.getElementById("stopShareBtn");
+            const input = document.getElementById("shareLinkInput");
+            if (copyBtn)
+              copyBtn.onclick = () => {
+                input.select();
+                navigator.clipboard &&
+                  navigator.clipboard.writeText(link).catch(() => {});
+                copyBtn.textContent = "Copied!";
+                setTimeout(() => {
+                  copyBtn.textContent = "Copy link";
+                }, 1500);
+              };
+            if (stopBtn)
+              stopBtn.onclick = () => {
+                state.sharing = false;
+                saveState();
+                render();
+              };
+          }, 0);
+        }
 
-  // Save to history
-  const doneCount = state.scores.filter(s=>s.done).length;
-  const saveHistSection = document.createElement("section");
-  const saveHistBtn = document.createElement("button");
-  saveHistBtn.className = "add-round-btn";
-  saveHistBtn.textContent = doneCount > 0
-    ? `Save this session to History (${doneCount}/${state.rounds.length} rounds played)`
-    : "Save this session to History";
-  saveHistBtn.onclick = ()=>{
-    const suggested = state.teamNames.a && state.teamNames.b
-      ? `${state.teamNames.a} vs ${state.teamNames.b}`
-      : "";
-    const name = prompt("Name this session (optional):", suggested) || "";
-    const entry = {
-      id: Date.now(),
-      savedAt: new Date().toISOString(),
-      name: name.trim(),
-      teamNames: { a: state.teamNames.a, b: state.teamNames.b },
-      players: [...state.players],
-      rounds: JSON.parse(JSON.stringify(state.rounds)),
-      scores: JSON.parse(JSON.stringify(state.scores)),
-    };
-    history.unshift(entry);
-    saveHistory();
-    state.view = "history";
-    render();
-  };
-  saveHistSection.appendChild(saveHistBtn);
-  wrap.appendChild(saveHistSection);
+        // Save to history
+        const doneCount = state.scores.filter((s) => s.done).length;
+        const saveHistSection = document.createElement("section");
+        const saveHistBtn = document.createElement("button");
+        saveHistBtn.className = "add-round-btn";
+        saveHistBtn.textContent =
+          doneCount > 0
+            ? `Save this session to History (${doneCount}/${state.rounds.length} rounds played)`
+            : "Save this session to History";
+        saveHistBtn.onclick = () => {
+          const suggested =
+            state.teamNames.a && state.teamNames.b
+              ? `${state.teamNames.a} vs ${state.teamNames.b}`
+              : "";
+          const name = prompt("Name this session (optional):", suggested) || "";
+          const entry = {
+            id: Date.now(),
+            savedAt: new Date().toISOString(),
+            name: name.trim(),
+            teamNames: { a: state.teamNames.a, b: state.teamNames.b },
+            players: [...state.players],
+            rounds: JSON.parse(JSON.stringify(state.rounds)),
+            scores: JSON.parse(JSON.stringify(state.scores)),
+          };
+          history.unshift(entry);
+          saveHistory();
+          state.view = "history";
+          render();
+        };
+        saveHistSection.appendChild(saveHistBtn);
+        wrap.appendChild(saveHistSection);
 
-  // Round nav
-  const navSection = document.createElement("section");
-  navSection.innerHTML = `<h2>Rounds</h2>`;
-  const nav = document.createElement("div");
-  nav.className = "round-nav";
-  state.rounds.forEach((r,i)=>{
-    const btn = document.createElement("button");
-    btn.className = "rn-btn" + (state.scores[i].done ? " done" : "") + (i===state.current ? " active" : "");
-    btn.textContent = r.label ? r.label : String(i+1);
-    btn.onclick = ()=>{ stopTimer(); state.current = i; render(); };
-    nav.appendChild(btn);
-  });
-  navSection.appendChild(nav);
-  wrap.appendChild(navSection);
+        // Round nav
+        const navSection = document.createElement("section");
+        navSection.innerHTML = `<h2>Rounds</h2>`;
+        const nav = document.createElement("div");
+        nav.className = "round-nav";
+        state.rounds.forEach((r, i) => {
+          const btn = document.createElement("button");
+          btn.className =
+            "rn-btn" +
+            (state.scores[i].done ? " done" : "") +
+            (i === state.current ? " active" : "");
+          btn.textContent = r.label ? r.label : String(i + 1);
+          btn.onclick = () => {
+            stopTimer();
+            state.current = i;
+            render();
+          };
+          nav.appendChild(btn);
+        });
+        navSection.appendChild(nav);
+        wrap.appendChild(navSection);
 
-  // Round card
-  const cardSection = document.createElement("section");
-  const card = document.createElement("div");
-  card.className = "round-card";
+        // Round card
+        const cardSection = document.createElement("section");
+        const card = document.createElement("div");
+        card.className = "round-card";
 
-  const i = state.current;
-  const r = state.rounds[i];
-  const sc = state.scores[i];
-  const rest = restOf(r);
+        const i = state.current;
+        const r = state.rounds[i];
+        const sc = state.scores[i];
+        const rest = restOf(r);
 
-  if(timerRoundIndex !== i){
-    resetTimerForRound(i);
-  }
+        if (timerRoundIndex !== i) {
+          resetTimerForRound(i);
+        }
 
-  card.innerHTML = `
+        card.innerHTML = `
     <div class="matchup">
       <div class="team">
         <div class="label">${escapeHtml(state.teamNames.a || "Team 1")}</div>
         <div class="players">${r.a.length ? r.a.map(escapeHtml).join(" + ") : "—"}</div>
       </div>
-      <div class="vs">${r.label ? escapeHtml(r.label) : "Round " + (i+1)}</div>
+      <div class="vs">${r.label ? escapeHtml(r.label) : "Round " + (i + 1)}</div>
       <div class="team">
         <div class="label">${escapeHtml(state.teamNames.b || "Team 2")}</div>
         <div class="players">${r.b.length ? r.b.map(escapeHtml).join(" + ") : "—"}</div>
@@ -1184,74 +1448,98 @@ function renderPlay(){
       </div>
     </div>
 
-    <button class="save-btn" id="saveBtn">Save score${i<state.rounds.length-1 ? " & go to next round" : ""}</button>
+    <button class="save-btn" id="saveBtn">Save score${i < state.rounds.length - 1 ? " & go to next round" : ""}</button>
     ${sc.done ? `<div class="saved-tag">✓ Saved — you can still edit and re-save</div>` : ""}
   `;
 
-  cardSection.appendChild(card);
-  wrap.appendChild(cardSection);
+        cardSection.appendChild(card);
+        wrap.appendChild(cardSection);
 
-  // wire up after insertion
-  setTimeout(()=>{
-    updateTimerDisplay();
-    document.getElementById("startBtn").onclick = startTimer;
-    document.getElementById("pauseBtn").onclick = stopTimer;
-    document.getElementById("resetTimerBtn").onclick = ()=> resetTimerForRound(i);
-    document.getElementById("saveBtn").onclick = ()=>{
-      const a = document.getElementById("scoreA").value;
-      const b = document.getElementById("scoreB").value;
-      state.scores[i] = { a, b, done:true };
-      if(i < state.rounds.length-1){
-        stopTimer();
-        state.current = i+1;
+        // wire up after insertion
+        setTimeout(() => {
+          updateTimerDisplay();
+          document.getElementById("startBtn").onclick = startTimer;
+          document.getElementById("pauseBtn").onclick = stopTimer;
+          document.getElementById("resetTimerBtn").onclick = () =>
+            resetTimerForRound(i);
+          document.getElementById("saveBtn").onclick = () => {
+            const a = document.getElementById("scoreA").value;
+            const b = document.getElementById("scoreB").value;
+            state.scores[i] = { a, b, done: true };
+            if (i < state.rounds.length - 1) {
+              stopTimer();
+              state.current = i + 1;
+            }
+            render();
+            pushShareSnapshot();
+          };
+        }, 0);
+
+        return wrap;
       }
-      render();
-      pushShareSnapshot();
-    };
-  }, 0);
 
-  return wrap;
-}
+      /* ---------------- RENDER: HISTORY ---------------- */
+      let expandedHistoryIds = new Set();
 
-/* ---------------- RENDER: HISTORY ---------------- */
-let expandedHistoryIds = new Set();
+      function formatDate(iso) {
+        try {
+          const d = new Date(iso);
+          return (
+            d.toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }) +
+            " · " +
+            d.toLocaleTimeString(undefined, {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          );
+        } catch (e) {
+          return iso;
+        }
+      }
 
-function formatDate(iso){
-  try{
-    const d = new Date(iso);
-    return d.toLocaleDateString(undefined, { year:"numeric", month:"short", day:"numeric" }) +
-      " · " + d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
-  }catch(e){ return iso; }
-}
+      function renderHistory() {
+        const wrap = document.createElement("div");
+        const section = document.createElement("section");
+        section.innerHTML = `<h2>Saved sessions</h2>`;
 
-function renderHistory(){
-  const wrap = document.createElement("div");
-  const section = document.createElement("section");
-  section.innerHTML = `<h2>Saved sessions</h2>`;
+        if (history.length === 0) {
+          const note = document.createElement("div");
+          note.className = "empty-note";
+          note.textContent =
+            "No saved sessions yet — save one from the Play tab once you've logged some scores.";
+          section.appendChild(note);
+          wrap.appendChild(section);
+          return wrap;
+        }
 
-  if(history.length === 0){
-    const note = document.createElement("div");
-    note.className = "empty-note";
-    note.textContent = "No saved sessions yet — save one from the Play tab once you've logged some scores.";
-    section.appendChild(note);
-    wrap.appendChild(section);
-    return wrap;
-  }
+        history.forEach((entry) => {
+          const { totals, played } = computeTotalsFor(
+            entry.players,
+            entry.rounds,
+            entry.scores,
+          );
+          const sorted = [...entry.players].sort(
+            (x, y) => totals[y] - totals[x],
+          );
+          const doneCount = entry.scores.filter((s) => s.done).length;
+          const isOpen = expandedHistoryIds.has(entry.id);
 
-  history.forEach(entry=>{
-    const { totals, played } = computeTotalsFor(entry.players, entry.rounds, entry.scores);
-    const sorted = [...entry.players].sort((x,y)=> totals[y]-totals[x]);
-    const doneCount = entry.scores.filter(s=>s.done).length;
-    const isOpen = expandedHistoryIds.has(entry.id);
+          const block = document.createElement("div");
+          block.className = "round-block";
 
-    const block = document.createElement("div");
-    block.className = "round-block";
-
-    const head = document.createElement("div");
-    head.className = "round-block-head";
-    head.style.cursor = "pointer";
-    const title = entry.name || (entry.teamNames.a && entry.teamNames.b ? `${entry.teamNames.a} vs ${entry.teamNames.b}` : "Untitled session");
-    head.innerHTML = `
+          const head = document.createElement("div");
+          head.className = "round-block-head";
+          head.style.cursor = "pointer";
+          const title =
+            entry.name ||
+            (entry.teamNames.a && entry.teamNames.b
+              ? `${entry.teamNames.a} vs ${entry.teamNames.b}`
+              : "Untitled session");
+          head.innerHTML = `
       <div style="flex:1;">
         <div style="font-weight:700; font-size:15px;">${escapeHtml(title)}</div>
         <div style="font-size:11.5px; color:rgba(238,242,230,0.5); margin-top:2px;">
@@ -1259,192 +1547,226 @@ function renderHistory(){
         </div>
       </div>
     `;
-    const delBtn = document.createElement("button");
-    delBtn.className = "round-del";
-    delBtn.textContent = historyDeleteArmed === entry.id ? "Confirm?" : "Delete";
-    delBtn.onclick = (e)=>{
-      e.stopPropagation();
-      confirmDelete(entry.id);
-    };
-    head.appendChild(delBtn);
-    head.addEventListener("click", (e)=>{
-      if(e.target === delBtn) return;
-      if(isOpen) expandedHistoryIds.delete(entry.id);
-      else expandedHistoryIds.add(entry.id);
-      render();
-    });
-    block.appendChild(head);
+          const delBtn = document.createElement("button");
+          delBtn.className = "round-del";
+          delBtn.textContent =
+            historyDeleteArmed === entry.id ? "Confirm?" : "Delete";
+          delBtn.onclick = (e) => {
+            e.stopPropagation();
+            confirmDelete(entry.id);
+          };
+          head.appendChild(delBtn);
+          head.addEventListener("click", (e) => {
+            if (e.target === delBtn) return;
+            if (isOpen) expandedHistoryIds.delete(entry.id);
+            else expandedHistoryIds.add(entry.id);
+            render();
+          });
+          block.appendChild(head);
 
-    if(isOpen){
-      const board = document.createElement("div");
-      board.className = "board";
-      board.style.margin = "12px 0";
-      sorted.forEach((p, idx)=>{
-        const row = document.createElement("div");
-        row.className = "board-row" + (idx===0 && totals[p]>0 ? " leader" : "");
-        row.innerHTML = `
-          <div class="rank">${idx+1}</div>
+          if (isOpen) {
+            const board = document.createElement("div");
+            board.className = "board";
+            board.style.margin = "12px 0";
+            sorted.forEach((p, idx) => {
+              const row = document.createElement("div");
+              row.className =
+                "board-row" + (idx === 0 && totals[p] > 0 ? " leader" : "");
+              row.innerHTML = `
+          <div class="rank">${idx + 1}</div>
           <div class="name">${escapeHtml(p)}</div>
           <div class="pts">${totals[p]}<small>/ ${played[p]} rd</small></div>
         `;
-        board.appendChild(row);
-      });
-      block.appendChild(board);
+              board.appendChild(row);
+            });
+            block.appendChild(board);
 
-      const roundsList = document.createElement("div");
-      roundsList.style.fontSize = "13px";
-      roundsList.style.color = "rgba(238,242,230,0.7)";
-      entry.rounds.forEach((r, i)=>{
-        const sc = entry.scores[i];
-        const line = document.createElement("div");
-        line.style.padding = "6px 2px";
-        line.style.borderBottom = "1px solid rgba(238,242,230,0.08)";
-        const rLabel = r.label || `Round ${i+1}`;
-        if(sc && sc.done){
-          line.innerHTML = `<b>${escapeHtml(rLabel)}</b> — ${escapeHtml(r.a.join(" + "))} <span style="color:var(--ball)">${sc.a}</span> : <span style="color:var(--clay)">${sc.b}</span> ${escapeHtml(r.b.join(" + "))}`;
-        } else {
-          line.innerHTML = `<b>${escapeHtml(rLabel)}</b> — not played`;
+            const roundsList = document.createElement("div");
+            roundsList.style.fontSize = "13px";
+            roundsList.style.color = "rgba(238,242,230,0.7)";
+            entry.rounds.forEach((r, i) => {
+              const sc = entry.scores[i];
+              const line = document.createElement("div");
+              line.style.padding = "6px 2px";
+              line.style.borderBottom = "1px solid rgba(238,242,230,0.08)";
+              const rLabel = r.label || `Round ${i + 1}`;
+              if (sc && sc.done) {
+                line.innerHTML = `<b>${escapeHtml(rLabel)}</b> — ${escapeHtml(r.a.join(" + "))} <span style="color:var(--ball)">${sc.a}</span> : <span style="color:var(--clay)">${sc.b}</span> ${escapeHtml(r.b.join(" + "))}`;
+              } else {
+                line.innerHTML = `<b>${escapeHtml(rLabel)}</b> — not played`;
+              }
+              roundsList.appendChild(line);
+            });
+            block.appendChild(roundsList);
+          }
+
+          section.appendChild(block);
+        });
+
+        const clearBtn = document.createElement("button");
+        clearBtn.className = "add-round-btn";
+        clearBtn.textContent = clearHistoryArmed
+          ? "Tap again to confirm"
+          : "Clear all history";
+        clearBtn.onclick = () => {
+          confirmClearHistory();
+        };
+        section.appendChild(clearBtn);
+
+        wrap.appendChild(section);
+        return wrap;
+      }
+
+      let historyDeleteArmed = null;
+      function confirmDelete(id) {
+        if (historyDeleteArmed !== id) {
+          historyDeleteArmed = id;
+          setTimeout(() => {
+            if (historyDeleteArmed === id) {
+              historyDeleteArmed = null;
+              render();
+            }
+          }, 3000);
+          render();
+          return false;
         }
-        roundsList.appendChild(line);
-      });
-      block.appendChild(roundsList);
-    }
+        historyDeleteArmed = null;
+        history = history.filter((e) => e.id !== id);
+        saveHistory();
+        render();
+        return true;
+      }
 
-    section.appendChild(block);
-  });
+      let clearHistoryArmed = false;
+      function confirmClearHistory() {
+        if (!clearHistoryArmed) {
+          clearHistoryArmed = true;
+          setTimeout(() => {
+            clearHistoryArmed = false;
+            render();
+          }, 3000);
+          render();
+          return false;
+        }
+        clearHistoryArmed = false;
+        history = [];
+        saveHistory();
+        render();
+        return true;
+      }
 
-  const clearBtn = document.createElement("button");
-  clearBtn.className = "add-round-btn";
-  clearBtn.textContent = clearHistoryArmed ? "Tap again to confirm" : "Clear all history";
-  clearBtn.onclick = ()=>{
-    confirmClearHistory();
-  };
-  section.appendChild(clearBtn);
+      /* ---------------- LIVE VIEWER (spectator, read-only) ---------------- */
+      function renderLiveBoard(container, snapshot) {
+        container.innerHTML = "";
+        const { totals, played } = computeTotalsFor(
+          snapshot.players || [],
+          snapshot.rounds || [],
+          snapshot.scores || [],
+        );
+        const sorted = [...(snapshot.players || [])].sort(
+          (x, y) => totals[y] - totals[x],
+        );
 
-  wrap.appendChild(section);
-  return wrap;
-}
-
-let historyDeleteArmed = null;
-function confirmDelete(id){
-  if(historyDeleteArmed !== id){
-    historyDeleteArmed = id;
-    setTimeout(()=>{ if(historyDeleteArmed===id){ historyDeleteArmed=null; render(); } }, 3000);
-    render();
-    return false;
-  }
-  historyDeleteArmed = null;
-  history = history.filter(e=>e.id!==id);
-  saveHistory();
-  render();
-  return true;
-}
-
-let clearHistoryArmed = false;
-function confirmClearHistory(){
-  if(!clearHistoryArmed){
-    clearHistoryArmed = true;
-    setTimeout(()=>{ clearHistoryArmed=false; render(); }, 3000);
-    render();
-    return false;
-  }
-  clearHistoryArmed = false;
-  history = [];
-  saveHistory();
-  render();
-  return true;
-}
-
-/* ---------------- LIVE VIEWER (spectator, read-only) ---------------- */
-function renderLiveBoard(container, snapshot){
-  container.innerHTML = "";
-  const { totals, played } = computeTotalsFor(snapshot.players || [], snapshot.rounds || [], snapshot.scores || []);
-  const sorted = [...(snapshot.players || [])].sort((x,y)=> totals[y]-totals[x]);
-
-  const boardSection = document.createElement("section");
-  boardSection.innerHTML = `<h2>Leaderboard</h2>`;
-  const board = document.createElement("div");
-  board.className = "board";
-  sorted.forEach((p, idx)=>{
-    const row = document.createElement("div");
-    row.className = "board-row" + (idx===0 && totals[p]>0 ? " leader" : "");
-    row.innerHTML = `
-      <div class="rank">${idx+1}</div>
+        const boardSection = document.createElement("section");
+        boardSection.innerHTML = `<h2>Leaderboard</h2>`;
+        const board = document.createElement("div");
+        board.className = "board";
+        sorted.forEach((p, idx) => {
+          const row = document.createElement("div");
+          row.className =
+            "board-row" + (idx === 0 && totals[p] > 0 ? " leader" : "");
+          row.innerHTML = `
+      <div class="rank">${idx + 1}</div>
       <div class="name">${escapeHtml(p)}</div>
       <div class="pts">${totals[p]}<small>/ ${played[p]} rd</small></div>
     `;
-    board.appendChild(row);
-  });
-  boardSection.appendChild(board);
-  container.appendChild(boardSection);
+          board.appendChild(row);
+        });
+        boardSection.appendChild(board);
+        container.appendChild(boardSection);
 
-  const roundsSection = document.createElement("section");
-  const i = snapshot.current || 0;
-  const r = (snapshot.rounds || [])[i];
-  roundsSection.innerHTML = `<h2>Current round</h2>`;
-  if(r){
-    const card = document.createElement("div");
-    card.className = "round-card";
-    const sc = (snapshot.scores || [])[i] || {a:"",b:"",done:false};
-    const teamA = snapshot.teamNames && snapshot.teamNames.a ? snapshot.teamNames.a : "Team 1";
-    const teamB = snapshot.teamNames && snapshot.teamNames.b ? snapshot.teamNames.b : "Team 2";
-    card.innerHTML = `
+        const roundsSection = document.createElement("section");
+        const i = snapshot.current || 0;
+        const r = (snapshot.rounds || [])[i];
+        roundsSection.innerHTML = `<h2>Current round</h2>`;
+        if (r) {
+          const card = document.createElement("div");
+          card.className = "round-card";
+          const sc = (snapshot.scores || [])[i] || {
+            a: "",
+            b: "",
+            done: false,
+          };
+          const teamA =
+            snapshot.teamNames && snapshot.teamNames.a
+              ? snapshot.teamNames.a
+              : "Team 1";
+          const teamB =
+            snapshot.teamNames && snapshot.teamNames.b
+              ? snapshot.teamNames.b
+              : "Team 2";
+          card.innerHTML = `
       <div class="matchup">
         <div class="team">
           <div class="label">${escapeHtml(teamA)}</div>
-          <div class="players">${(r.a||[]).map(escapeHtml).join(" + ") || "—"}</div>
+          <div class="players">${(r.a || []).map(escapeHtml).join(" + ") || "—"}</div>
         </div>
-        <div class="vs">${r.label ? escapeHtml(r.label) : "Round " + (i+1)}</div>
+        <div class="vs">${r.label ? escapeHtml(r.label) : "Round " + (i + 1)}</div>
         <div class="team">
           <div class="label">${escapeHtml(teamB)}</div>
-          <div class="players">${(r.b||[]).map(escapeHtml).join(" + ") || "—"}</div>
+          <div class="players">${(r.b || []).map(escapeHtml).join(" + ") || "—"}</div>
         </div>
       </div>
       <div class="rest-line">${sc.done ? `Score: <b>${sc.a} – ${sc.b}</b>` : "In progress…"}</div>
     `;
-    roundsSection.appendChild(card);
-  }
-  container.appendChild(roundsSection);
+          roundsSection.appendChild(card);
+        }
+        container.appendChild(roundsSection);
 
-  const note = document.createElement("div");
-  note.style.textAlign = "center";
-  note.style.fontSize = "11.5px";
-  note.style.color = "rgba(238,242,230,0.4)";
-  note.textContent = snapshot.updatedAt ? "Updated " + new Date(snapshot.updatedAt).toLocaleTimeString() : "";
-  container.appendChild(note);
-}
+        const note = document.createElement("div");
+        note.style.textAlign = "center";
+        note.style.fontSize = "11.5px";
+        note.style.color = "rgba(238,242,230,0.4)";
+        note.textContent = snapshot.updatedAt
+          ? "Updated " + new Date(snapshot.updatedAt).toLocaleTimeString()
+          : "";
+        container.appendChild(note);
+      }
 
-function startLiveViewer(bucketId){
-  document.querySelector("header .tabs").style.display = "none";
-  document.querySelector("header .eyebrow").textContent = "LIVE · READ ONLY";
-  document.querySelector("header p").textContent = "Following the leaderboard in real time";
-  const footer = document.querySelector("footer");
-  if(footer) footer.style.display = "none";
+      function startLiveViewer(bucketId) {
+        document.querySelector("header .tabs").style.display = "none";
+        document.querySelector("header .eyebrow").textContent =
+          "LIVE · READ ONLY";
+        document.querySelector("header p").textContent =
+          "Following the leaderboard in real time";
+        const footer = document.querySelector("footer");
+        if (footer) footer.style.display = "none";
 
-  const main = document.getElementById("main");
-  main.innerHTML = `<div class="empty-note">Connecting…</div>`;
+        const main = document.getElementById("main");
+        main.innerHTML = `<div class="empty-note">Connecting…</div>`;
 
-  async function poll(){
-    try{
-      const res = await fetch(`${KVDB_BASE}/${bucketId}/state`, { headers:{ "Accept":"application/json" } });
-      if(!res.ok) throw new Error("not found");
-      const snapshot = await res.json();
-      renderLiveBoard(main, snapshot);
-    }catch(e){
-      main.innerHTML = `<div class="empty-note">This live link isn't available right now — it may have expired, or the host has stopped sharing.</div>`;
-    }
-  }
-  poll();
-  setInterval(poll, 4000);
-}
+        async function poll() {
+          try {
+            const res = await fetch(`${KVDB_BASE}/${bucketId}/state`, {
+              headers: { Accept: "application/json" },
+            });
+            if (!res.ok) throw new Error("not found");
+            const snapshot = await res.json();
+            renderLiveBoard(main, snapshot);
+          } catch (e) {
+            main.innerHTML = `<div class="empty-note">This live link isn't available right now — it may have expired, or the host has stopped sharing.</div>`;
+          }
+        }
+        poll();
+        setInterval(poll, 4000);
+      }
 
-const liveId = new URLSearchParams(location.search).get("live");
-if(liveId){
-  startLiveViewer(liveId);
-} else {
-  render();
-}
-</script>
-
-</body>
+      const liveId = new URLSearchParams(location.search).get("live");
+      if (liveId) {
+        startLiveViewer(liveId);
+      } else {
+        render();
+      }
+    </script>
+  </body>
 </html>
