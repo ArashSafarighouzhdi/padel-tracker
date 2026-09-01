@@ -785,7 +785,7 @@
         };
         try {
           await fetch(`${KVDB_BASE}/${state.shareBucket}/state`, {
-            method: "PUT",
+            method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(snapshot),
           });
@@ -1751,7 +1751,8 @@
               headers: { Accept: "application/json" },
             });
             if (!res.ok) throw new Error("not found");
-            const snapshot = await res.json();
+            const text = await res.text();
+            const snapshot = JSON.parse(text);
             renderLiveBoard(main, snapshot);
           } catch (e) {
             main.innerHTML = `<div class="empty-note">This live link isn't available right now — it may have expired, or the host has stopped sharing.</div>`;
