@@ -532,6 +532,7 @@
   <div class="tabs">
     <button id="tabSetup">Setup</button>
     <button id="tabPlay">Play</button>
+    <button id="tabHistory">History</button>
   </div>
 </header>
 
@@ -544,6 +545,8 @@
 <script>
 const STORAGE_KEY = "padel-tracker-v3";
 
+const HISTORY_KEY = "padel-tracker-history-v1";
+
 function defaultState(){
   return {
     view: "setup",
@@ -553,6 +556,8 @@ function defaultState(){
     rounds: [],
     scores: [],
     current: 0,
+    sharing: false,
+    shareBucket: null,
   };
 }
 
@@ -567,11 +572,75 @@ function loadState(){
   return defaultState();
 }
 
+function loadHistory(){
+  try{
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed)) return parsed;
+    }
+  }catch(e){}
+  return [];
+}
+
+function saveHistory(){
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
+
 let state = loadState();
+let history = loadHistory();
+if(state.sharing === undefined) state.sharing = false;
+if(state.shareBucket === undefined) state.shareBucket = null;
 syncScores();
 
 function saveState(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+/* ---------------- LIVE SHARE (kvdb.io free relay) ---------------- */
+const KVDB_BASE = "https://kvdb.io";
+
+async function createShareBucket(){
+  const res = await fetch(KVDB_BASE + "/", { method:"POST", body:"" });
+  if(!res.ok) throw new Error("bucket create failed");
+  const id = (await res.text()).trim();
+  if(!id) throw new Error("empty bucket id");
+  return id;
+}
+
+async function pushShareSnapshot(){
+  if(!state.sharing || !state.shareBucket) return;
+  const snapshot = {
+    teamNames: state.teamNames,
+    players: state.players,
+    rounds: state.rounds,
+    scores: state.scores,
+    current: state.current,
+    updatedAt: Date.now(),
+  };
+  try{
+    await fetch(`${KVDB_BASE}/${state.shareBucket}/state`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(snapshot),
+    });
+  }catch(e){ /* best-effort; ignore network errors */ }
+}
+
+let shareInterval = null;
+function manageShareInterval(){
+  if(shareInterval){ clearInterval(shareInterval); shareInterval = null; }
+  if(state.view === "play" && state.sharing && state.shareBucket){
+    pushShareSnapshot();
+    shareInterval = setInterval(pushShareSnapshot, 6000);
+  }
+}
+
+function shareLink(){
+  const url = new URL(location.href);
+  url.search = "";
+  url.searchParams.set("live", state.shareBucket);
+  return url.toString();
 }
 
 function syncScores(){
@@ -665,18 +734,21 @@ function startTimer(){
 }
 
 /* ---------------- SCORING HELPERS ---------------- */
-function computeTotals(){
+function computeTotalsFor(players, rounds, scores){
   const totals = {};
   const played = {};
-  state.players.forEach(p=>{ totals[p]=0; played[p]=0; });
-  state.rounds.forEach((r,i)=>{
-    const sc = state.scores[i];
+  players.forEach(p=>{ totals[p]=0; played[p]=0; });
+  rounds.forEach((r,i)=>{
+    const sc = scores[i];
     if(!sc || !sc.done) return;
     const av = parseInt(sc.a)||0, bv = parseInt(sc.b)||0;
     r.a.forEach(p=>{ if(totals[p]===undefined){totals[p]=0;played[p]=0;} totals[p]+=av; played[p]++; });
     r.b.forEach(p=>{ if(totals[p]===undefined){totals[p]=0;played[p]=0;} totals[p]+=bv; played[p]++; });
   });
   return {totals, played};
+}
+function computeTotals(){
+  return computeTotalsFor(state.players, state.rounds, state.scores);
 }
 function restOf(round){
   const used = new Set([...round.a, ...round.b]);
@@ -687,18 +759,23 @@ function restOf(round){
 function render(){
   document.getElementById("tabSetup").classList.toggle("active", state.view==="setup");
   document.getElementById("tabPlay").classList.toggle("active", state.view==="play");
+  document.getElementById("tabHistory").classList.toggle("active", state.view==="history");
   const main = document.getElementById("main");
   main.innerHTML = "";
   if(state.view === "setup"){
     main.appendChild(renderSetup());
+  } else if(state.view === "history"){
+    main.appendChild(renderHistory());
   } else {
     main.appendChild(renderPlay());
   }
   saveState();
+  manageShareInterval();
 }
 
 document.getElementById("tabSetup").onclick = ()=>{ stopTimer(); state.view="setup"; render(); };
 document.getElementById("tabPlay").onclick = ()=>{ state.view="play"; render(); };
+document.getElementById("tabHistory").onclick = ()=>{ stopTimer(); state.view="history"; render(); };
 let resetArmed = false;
 let resetArmTimeout = null;
 const resetBtn = document.getElementById("resetBtn");
@@ -946,6 +1023,102 @@ function renderPlay(){
   boardSection.appendChild(board);
   wrap.appendChild(boardSection);
 
+  // Live share
+  const shareSection = document.createElement("section");
+  shareSection.innerHTML = `<h2>Live share</h2>`;
+  const sharePanel = document.createElement("div");
+  sharePanel.className = "panel";
+
+  if(!state.sharing || !state.shareBucket){
+    sharePanel.innerHTML = `
+      <div class="hint" style="margin-top:0;">Share a read-only link so others can follow the leaderboard live, without editing anything.</div>
+      <button class="save-btn" id="startShareBtn">Share live table</button>
+    `;
+    shareSection.appendChild(sharePanel);
+    wrap.appendChild(shareSection);
+    setTimeout(()=>{
+      const btn = document.getElementById("startShareBtn");
+      if(!btn) return;
+      btn.onclick = async ()=>{
+        btn.disabled = true;
+        btn.textContent = "Creating link…";
+        try{
+          if(!state.shareBucket){
+            state.shareBucket = await createShareBucket();
+          }
+          state.sharing = true;
+          saveState();
+          await pushShareSnapshot();
+          render();
+        }catch(e){
+          btn.disabled = false;
+          btn.textContent = "Share live table";
+          alert("Couldn't create a live link right now. Check your connection and try again.");
+        }
+      };
+    }, 0);
+  } else {
+    const link = shareLink();
+    sharePanel.innerHTML = `
+      <div class="hint" style="margin-top:0;">Anyone with this link sees the leaderboard update live — they can't edit anything.</div>
+      <div class="field">
+        <input type="text" id="shareLinkInput" readonly value="${escapeHtml(link)}" style="width:100%; background:rgba(8,37,31,0.4); border:1.5px solid rgba(238,242,230,0.2); border-radius:8px; color:var(--court-line); font-family:'Space Mono', monospace; font-size:13px; padding:9px 12px;">
+      </div>
+      <div class="timer-btns" style="justify-content:flex-start; margin-top:10px;">
+        <button class="primary" id="copyShareBtn">Copy link</button>
+        <button id="stopShareBtn">Stop sharing</button>
+      </div>
+    `;
+    shareSection.appendChild(sharePanel);
+    wrap.appendChild(shareSection);
+    setTimeout(()=>{
+      const copyBtn = document.getElementById("copyShareBtn");
+      const stopBtn = document.getElementById("stopShareBtn");
+      const input = document.getElementById("shareLinkInput");
+      if(copyBtn) copyBtn.onclick = ()=>{
+        input.select();
+        navigator.clipboard && navigator.clipboard.writeText(link).catch(()=>{});
+        copyBtn.textContent = "Copied!";
+        setTimeout(()=>{ copyBtn.textContent = "Copy link"; }, 1500);
+      };
+      if(stopBtn) stopBtn.onclick = ()=>{
+        state.sharing = false;
+        saveState();
+        render();
+      };
+    }, 0);
+  }
+
+  // Save to history
+  const doneCount = state.scores.filter(s=>s.done).length;
+  const saveHistSection = document.createElement("section");
+  const saveHistBtn = document.createElement("button");
+  saveHistBtn.className = "add-round-btn";
+  saveHistBtn.textContent = doneCount > 0
+    ? `Save this session to History (${doneCount}/${state.rounds.length} rounds played)`
+    : "Save this session to History";
+  saveHistBtn.onclick = ()=>{
+    const suggested = state.teamNames.a && state.teamNames.b
+      ? `${state.teamNames.a} vs ${state.teamNames.b}`
+      : "";
+    const name = prompt("Name this session (optional):", suggested) || "";
+    const entry = {
+      id: Date.now(),
+      savedAt: new Date().toISOString(),
+      name: name.trim(),
+      teamNames: { a: state.teamNames.a, b: state.teamNames.b },
+      players: [...state.players],
+      rounds: JSON.parse(JSON.stringify(state.rounds)),
+      scores: JSON.parse(JSON.stringify(state.scores)),
+    };
+    history.unshift(entry);
+    saveHistory();
+    state.view = "history";
+    render();
+  };
+  saveHistSection.appendChild(saveHistBtn);
+  wrap.appendChild(saveHistSection);
+
   // Round nav
   const navSection = document.createElement("section");
   navSection.innerHTML = `<h2>Rounds</h2>`;
@@ -1033,13 +1206,244 @@ function renderPlay(){
         state.current = i+1;
       }
       render();
+      pushShareSnapshot();
     };
   }, 0);
 
   return wrap;
 }
 
-render();
+/* ---------------- RENDER: HISTORY ---------------- */
+let expandedHistoryIds = new Set();
+
+function formatDate(iso){
+  try{
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { year:"numeric", month:"short", day:"numeric" }) +
+      " · " + d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
+  }catch(e){ return iso; }
+}
+
+function renderHistory(){
+  const wrap = document.createElement("div");
+  const section = document.createElement("section");
+  section.innerHTML = `<h2>Saved sessions</h2>`;
+
+  if(history.length === 0){
+    const note = document.createElement("div");
+    note.className = "empty-note";
+    note.textContent = "No saved sessions yet — save one from the Play tab once you've logged some scores.";
+    section.appendChild(note);
+    wrap.appendChild(section);
+    return wrap;
+  }
+
+  history.forEach(entry=>{
+    const { totals, played } = computeTotalsFor(entry.players, entry.rounds, entry.scores);
+    const sorted = [...entry.players].sort((x,y)=> totals[y]-totals[x]);
+    const doneCount = entry.scores.filter(s=>s.done).length;
+    const isOpen = expandedHistoryIds.has(entry.id);
+
+    const block = document.createElement("div");
+    block.className = "round-block";
+
+    const head = document.createElement("div");
+    head.className = "round-block-head";
+    head.style.cursor = "pointer";
+    const title = entry.name || (entry.teamNames.a && entry.teamNames.b ? `${entry.teamNames.a} vs ${entry.teamNames.b}` : "Untitled session");
+    head.innerHTML = `
+      <div style="flex:1;">
+        <div style="font-weight:700; font-size:15px;">${escapeHtml(title)}</div>
+        <div style="font-size:11.5px; color:rgba(238,242,230,0.5); margin-top:2px;">
+          ${formatDate(entry.savedAt)} · ${doneCount}/${entry.rounds.length} rounds
+        </div>
+      </div>
+    `;
+    const delBtn = document.createElement("button");
+    delBtn.className = "round-del";
+    delBtn.textContent = historyDeleteArmed === entry.id ? "Confirm?" : "Delete";
+    delBtn.onclick = (e)=>{
+      e.stopPropagation();
+      confirmDelete(entry.id);
+    };
+    head.appendChild(delBtn);
+    head.addEventListener("click", (e)=>{
+      if(e.target === delBtn) return;
+      if(isOpen) expandedHistoryIds.delete(entry.id);
+      else expandedHistoryIds.add(entry.id);
+      render();
+    });
+    block.appendChild(head);
+
+    if(isOpen){
+      const board = document.createElement("div");
+      board.className = "board";
+      board.style.margin = "12px 0";
+      sorted.forEach((p, idx)=>{
+        const row = document.createElement("div");
+        row.className = "board-row" + (idx===0 && totals[p]>0 ? " leader" : "");
+        row.innerHTML = `
+          <div class="rank">${idx+1}</div>
+          <div class="name">${escapeHtml(p)}</div>
+          <div class="pts">${totals[p]}<small>/ ${played[p]} rd</small></div>
+        `;
+        board.appendChild(row);
+      });
+      block.appendChild(board);
+
+      const roundsList = document.createElement("div");
+      roundsList.style.fontSize = "13px";
+      roundsList.style.color = "rgba(238,242,230,0.7)";
+      entry.rounds.forEach((r, i)=>{
+        const sc = entry.scores[i];
+        const line = document.createElement("div");
+        line.style.padding = "6px 2px";
+        line.style.borderBottom = "1px solid rgba(238,242,230,0.08)";
+        const rLabel = r.label || `Round ${i+1}`;
+        if(sc && sc.done){
+          line.innerHTML = `<b>${escapeHtml(rLabel)}</b> — ${escapeHtml(r.a.join(" + "))} <span style="color:var(--ball)">${sc.a}</span> : <span style="color:var(--clay)">${sc.b}</span> ${escapeHtml(r.b.join(" + "))}`;
+        } else {
+          line.innerHTML = `<b>${escapeHtml(rLabel)}</b> — not played`;
+        }
+        roundsList.appendChild(line);
+      });
+      block.appendChild(roundsList);
+    }
+
+    section.appendChild(block);
+  });
+
+  const clearBtn = document.createElement("button");
+  clearBtn.className = "add-round-btn";
+  clearBtn.textContent = clearHistoryArmed ? "Tap again to confirm" : "Clear all history";
+  clearBtn.onclick = ()=>{
+    confirmClearHistory();
+  };
+  section.appendChild(clearBtn);
+
+  wrap.appendChild(section);
+  return wrap;
+}
+
+let historyDeleteArmed = null;
+function confirmDelete(id){
+  if(historyDeleteArmed !== id){
+    historyDeleteArmed = id;
+    setTimeout(()=>{ if(historyDeleteArmed===id){ historyDeleteArmed=null; render(); } }, 3000);
+    render();
+    return false;
+  }
+  historyDeleteArmed = null;
+  history = history.filter(e=>e.id!==id);
+  saveHistory();
+  render();
+  return true;
+}
+
+let clearHistoryArmed = false;
+function confirmClearHistory(){
+  if(!clearHistoryArmed){
+    clearHistoryArmed = true;
+    setTimeout(()=>{ clearHistoryArmed=false; render(); }, 3000);
+    render();
+    return false;
+  }
+  clearHistoryArmed = false;
+  history = [];
+  saveHistory();
+  render();
+  return true;
+}
+
+/* ---------------- LIVE VIEWER (spectator, read-only) ---------------- */
+function renderLiveBoard(container, snapshot){
+  container.innerHTML = "";
+  const { totals, played } = computeTotalsFor(snapshot.players || [], snapshot.rounds || [], snapshot.scores || []);
+  const sorted = [...(snapshot.players || [])].sort((x,y)=> totals[y]-totals[x]);
+
+  const boardSection = document.createElement("section");
+  boardSection.innerHTML = `<h2>Leaderboard</h2>`;
+  const board = document.createElement("div");
+  board.className = "board";
+  sorted.forEach((p, idx)=>{
+    const row = document.createElement("div");
+    row.className = "board-row" + (idx===0 && totals[p]>0 ? " leader" : "");
+    row.innerHTML = `
+      <div class="rank">${idx+1}</div>
+      <div class="name">${escapeHtml(p)}</div>
+      <div class="pts">${totals[p]}<small>/ ${played[p]} rd</small></div>
+    `;
+    board.appendChild(row);
+  });
+  boardSection.appendChild(board);
+  container.appendChild(boardSection);
+
+  const roundsSection = document.createElement("section");
+  const i = snapshot.current || 0;
+  const r = (snapshot.rounds || [])[i];
+  roundsSection.innerHTML = `<h2>Current round</h2>`;
+  if(r){
+    const card = document.createElement("div");
+    card.className = "round-card";
+    const sc = (snapshot.scores || [])[i] || {a:"",b:"",done:false};
+    const teamA = snapshot.teamNames && snapshot.teamNames.a ? snapshot.teamNames.a : "Team 1";
+    const teamB = snapshot.teamNames && snapshot.teamNames.b ? snapshot.teamNames.b : "Team 2";
+    card.innerHTML = `
+      <div class="matchup">
+        <div class="team">
+          <div class="label">${escapeHtml(teamA)}</div>
+          <div class="players">${(r.a||[]).map(escapeHtml).join(" + ") || "—"}</div>
+        </div>
+        <div class="vs">${r.label ? escapeHtml(r.label) : "Round " + (i+1)}</div>
+        <div class="team">
+          <div class="label">${escapeHtml(teamB)}</div>
+          <div class="players">${(r.b||[]).map(escapeHtml).join(" + ") || "—"}</div>
+        </div>
+      </div>
+      <div class="rest-line">${sc.done ? `Score: <b>${sc.a} – ${sc.b}</b>` : "In progress…"}</div>
+    `;
+    roundsSection.appendChild(card);
+  }
+  container.appendChild(roundsSection);
+
+  const note = document.createElement("div");
+  note.style.textAlign = "center";
+  note.style.fontSize = "11.5px";
+  note.style.color = "rgba(238,242,230,0.4)";
+  note.textContent = snapshot.updatedAt ? "Updated " + new Date(snapshot.updatedAt).toLocaleTimeString() : "";
+  container.appendChild(note);
+}
+
+function startLiveViewer(bucketId){
+  document.querySelector("header .tabs").style.display = "none";
+  document.querySelector("header .eyebrow").textContent = "LIVE · READ ONLY";
+  document.querySelector("header p").textContent = "Following the leaderboard in real time";
+  const footer = document.querySelector("footer");
+  if(footer) footer.style.display = "none";
+
+  const main = document.getElementById("main");
+  main.innerHTML = `<div class="empty-note">Connecting…</div>`;
+
+  async function poll(){
+    try{
+      const res = await fetch(`${KVDB_BASE}/${bucketId}/state`, { headers:{ "Accept":"application/json" } });
+      if(!res.ok) throw new Error("not found");
+      const snapshot = await res.json();
+      renderLiveBoard(main, snapshot);
+    }catch(e){
+      main.innerHTML = `<div class="empty-note">This live link isn't available right now — it may have expired, or the host has stopped sharing.</div>`;
+    }
+  }
+  poll();
+  setInterval(poll, 4000);
+}
+
+const liveId = new URLSearchParams(location.search).get("live");
+if(liveId){
+  startLiveViewer(liveId);
+} else {
+  render();
+}
 </script>
 
 </body>

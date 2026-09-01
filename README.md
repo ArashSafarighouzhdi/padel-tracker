@@ -20,6 +20,11 @@ and AI-assisted development rather than hand-writing every line.
 - **30-second warning bell** — an audio cue fires when 30 seconds are left
   in a round, plus a finishing chime at zero. No sound files — it's
   generated in the browser with the Web Audio API.
+- **Live sharing** — generate a read-only link from the Play tab so anyone
+  (no login, no app) can watch the leaderboard and current round update in
+  real time on their own phone. Sharing uses a free, no-signup key-value
+  relay ([kvdb.io](https://kvdb.io)) as a simple sync layer — good enough
+  for a casual night with friends, not meant for private or sensitive data.
 - **Live leaderboard** — recalculates automatically from saved round scores,
   ranking players by total points across the rounds they've played.
 - **Works offline / no backend** — everything runs client-side, and progress
@@ -39,6 +44,20 @@ Just open `index.html` in a browser, or serve it:
 ```bash
 npx serve .
 ```
+
+## Deploy to Vercel
+
+### Option A — Vercel CLI
+```bash
+npm i -g vercel
+vercel --prod
+```
+
+### Option B — GitHub + Vercel dashboard
+1. Push this folder to a GitHub repo.
+2. Go to https://vercel.com/new and import the repo.
+3. Framework preset: **Other** (it's a static site — no build command needed).
+4. Deploy.
 
 ## Project structure
 
